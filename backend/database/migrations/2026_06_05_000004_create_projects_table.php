@@ -13,9 +13,18 @@ return new class extends Migration
             $table->string('title');
             $table->string('category')->index();
             $table->string('location');
-            $table->text('description');
-            $table->string('image')->nullable();
             $table->string('status')->default('draft')->index();
+            $table->string('image')->nullable();
+            $table->text('short_description');
+            $table->text('detailed_description');
+            $table->string('client')->nullable();
+            $table->date('project_date')->nullable();
+            $table->string('estimated_budget')->nullable();
+            $table->string('duration')->nullable();
+            $table->string('slug')->unique();
+            $table->string('meta_title')->nullable();
+            $table->text('meta_description')->nullable();
+            $table->boolean('is_published')->default(false)->index();
             $table->timestamps();
         });
     }

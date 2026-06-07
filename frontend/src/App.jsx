@@ -23,7 +23,7 @@ import {
   Target,
   Users,
 } from 'lucide-react'
-import heroBuilding from './assets/corporate/hero-building.png'
+import heroInfographic from './assets/score-pack-hero-infographic.png'
 import aboutHero from './assets/corporate/about-hero-building.png'
 import aboutMeeting from './assets/corporate/about-meeting.png'
 import ContactVisitorPage from './pages/visitor/ContactPage.jsx'
@@ -35,11 +35,12 @@ import LoginPage from './pages/visitor/LoginPage.jsx'
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 import AdminServices from './pages/admin/AdminServices.jsx'
 import AdminProjects from './pages/admin/AdminProjects.jsx'
+import AdminProjectCreate from './pages/admin/AdminProjectCreate.jsx'
+import AdminProjectEdit from './pages/admin/AdminProjectEdit.jsx'
 import AdminQuotes from './pages/admin/AdminQuotes.jsx'
 import AdminMessages from './pages/admin/AdminMessages.jsx'
 import AdminUsers from './pages/admin/AdminUsers.jsx'
 import AdminSettings from './pages/admin/AdminSettings.jsx'
-import AdminTeams from './pages/admin/AdminTeams.jsx'
 import AdminNews from './pages/admin/AdminNews.jsx'
 import { apiErrorMessage } from './api/client.js'
 import { publicApi } from './api/resources.js'
@@ -222,12 +223,13 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="services" element={<AdminServices />} />
           <Route path="projects" element={<AdminProjects />} />
+          <Route path="projects/create" element={<AdminProjectCreate />} />
+          <Route path="projects/:id/edit" element={<AdminProjectEdit />} />
           <Route path="quotes" element={<AdminQuotes />} />
           <Route path="messages" element={<AdminMessages />} />
           <Route path="news" element={<AdminNews />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="teams" element={<AdminTeams />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Route>
@@ -360,7 +362,7 @@ function HomePage({ publicData }) {
         </div>
 
         <img
-          src={heroBuilding}
+          src={heroInfographic}
           alt="Siège corporate moderne"
           className="h-[330px] w-full rounded-[30px] object-cover shadow-[0_24px_70px_rgba(15,39,71,0.14)] sm:h-[430px]"
         />

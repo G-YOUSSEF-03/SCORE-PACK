@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { apiErrorMessage } from '../../api/client.js'
 import { servicesApi } from '../../api/resources.js'
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const stats = [
@@ -114,6 +115,8 @@ const fallbackServices = [
 function AdminServices() {
   const [services, setServices] = useState(fallbackServices)
   const [loading, setLoading] = useState(true)
+  const [serviceToDelete, setServiceToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const { notify } = useToast()
 
   const loadServices = async () => {
@@ -158,14 +161,18 @@ function AdminServices() {
     }
   }
 
-  const deleteService = async (service) => {
-    if (!window.confirm(`Supprimer "${service.title}" ?`)) return
+  const confirmDeleteService = async () => {
+    if (!serviceToDelete) return
+    setDeleting(true)
     try {
-      await servicesApi.remove(service.id)
+      await servicesApi.remove(serviceToDelete.id)
+      setServiceToDelete(null)
       notify('Service supprimé.')
       loadServices()
     } catch (error) {
       notify(apiErrorMessage(error, 'Suppression impossible.'), 'error')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -228,7 +235,7 @@ function AdminServices() {
             </thead>
             <tbody className="divide-y divide-[#e8edf4]">
               {services.map((service) => (
-                <ServiceRow key={service.id} service={service} onEdit={editService} onDelete={deleteService} />
+                <ServiceRow key={service.id} service={service} onEdit={editService} onDelete={setServiceToDelete} />
               ))}
             </tbody>
           </table>
@@ -243,6 +250,17 @@ function AdminServices() {
           </div>
         </div>
       </section>
+      <ConfirmDeleteModal
+        open={Boolean(serviceToDelete)}
+        title="Supprimer le service"
+        message="Êtes-vous sûr de vouloir supprimer ce service ?"
+        details="Cette action est irréversible."
+        loading={deleting}
+        onCancel={() => {
+          if (!deleting) setServiceToDelete(null)
+        }}
+        onConfirm={confirmDeleteService}
+      />
     </div>
   )
 }

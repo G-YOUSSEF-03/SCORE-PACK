@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { apiErrorMessage } from '../../api/client.js'
 import { quotesApi } from '../../api/resources.js'
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const stats = [
@@ -118,6 +119,8 @@ const fallbackQuoteRows = [
 function AdminQuotes() {
   const [quoteRows, setQuoteRows] = useState(fallbackQuoteRows)
   const [loading, setLoading] = useState(true)
+  const [quoteToDelete, setQuoteToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const { notify } = useToast()
 
   const loadQuotes = async () => {
@@ -148,14 +151,18 @@ function AdminQuotes() {
     }
   }
 
-  const deleteQuote = async (quote) => {
-    if (!window.confirm(`Supprimer la demande de ${quote.client} ?`)) return
+  const confirmDeleteQuote = async () => {
+    if (!quoteToDelete) return
+    setDeleting(true)
     try {
-      await quotesApi.remove(quote.id)
+      await quotesApi.remove(quoteToDelete.id)
+      setQuoteToDelete(null)
       notify('Demande supprimée.')
       loadQuotes()
     } catch (error) {
       notify(apiErrorMessage(error, 'Suppression impossible.'), 'error')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -224,7 +231,7 @@ function AdminQuotes() {
             </thead>
             <tbody className="divide-y divide-[#e8edf4]">
               {quoteRows.map((quote) => (
-                <QuoteRow key={quote.id} quote={quote} onEdit={updateQuote} onDelete={deleteQuote} />
+                <QuoteRow key={quote.id} quote={quote} onEdit={updateQuote} onDelete={setQuoteToDelete} />
               ))}
             </tbody>
           </table>
@@ -243,6 +250,17 @@ function AdminQuotes() {
           </div>
         </div>
       </section>
+      <ConfirmDeleteModal
+        open={Boolean(quoteToDelete)}
+        title="Supprimer la demande"
+        message="Êtes-vous sûr de vouloir supprimer cette demande ?"
+        details="Cette action est irréversible."
+        loading={deleting}
+        onCancel={() => {
+          if (!deleting) setQuoteToDelete(null)
+        }}
+        onConfirm={confirmDeleteQuote}
+      />
     </div>
   )
 }

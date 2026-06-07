@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { apiErrorMessage } from '../../api/client.js'
 import { messagesApi } from '../../api/resources.js'
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const statTemplates = [
@@ -39,6 +40,8 @@ function AdminMessages() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [replyOpen, setReplyOpen] = useState(false)
+  const [messageToDelete, setMessageToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const { notify } = useToast()
 
   const loadMessages = async () => {
@@ -90,15 +93,19 @@ function AdminMessages() {
     }
   }
 
-  const deleteMessage = async (message) => {
-    if (!window.confirm(`Supprimer le message de ${message.sender} ?`)) return
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return
+    setDeleting(true)
     try {
-      await messagesApi.remove(message.id)
-      notify('Message supprime.')
+      await messagesApi.remove(messageToDelete.id)
+      notify('Message supprimé avec succès')
       setSelected(null)
+      setMessageToDelete(null)
       loadMessages()
     } catch (requestError) {
-      notify(apiErrorMessage(requestError, 'Suppression impossible.'), 'error')
+      notify(apiErrorMessage(requestError, 'Erreur lors de la suppression du message'), 'error')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -147,12 +154,23 @@ function AdminMessages() {
 
       <section className="grid gap-6 xl:grid-cols-[0.98fr_1.02fr]">
         <InboxCard messages={messages} selected={selected} loading={loading} unreadCount={stats.unread} totalCount={stats.total} onSelect={selectMessage} />
-        <MessageDetailCard message={selected} onDelete={deleteMessage} onReply={openReply} />
+        <MessageDetailCard message={selected} onDelete={setMessageToDelete} onReply={openReply} />
       </section>
 
       {replyOpen && selected ? (
         <ReplyModal message={selected} onClose={() => setReplyOpen(false)} onSend={sendReply} />
       ) : null}
+      <ConfirmDeleteModal
+        open={Boolean(messageToDelete)}
+        title="Supprimer le message"
+        message="Êtes-vous sûr de vouloir supprimer ce message ?"
+        details="Cette action est irréversible."
+        loading={deleting}
+        onCancel={() => {
+          if (!deleting) setMessageToDelete(null)
+        }}
+        onConfirm={confirmDeleteMessage}
+      />
     </div>
   )
 }

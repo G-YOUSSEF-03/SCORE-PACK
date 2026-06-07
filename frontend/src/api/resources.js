@@ -26,6 +26,7 @@ export const servicesApi = {
 
 export const projectsApi = {
   list: () => api.get('/admin/projects').then(unwrap),
+  show: (id) => api.get(`/admin/projects/${id}`).then(unwrap),
   create: (payload) => api.post('/admin/projects', payload, multipartConfig()).then(unwrap),
   update: (id, payload) => api.post(`/admin/projects/${id}?_method=PUT`, payload, multipartConfig()).then(unwrap),
   remove: (id) => api.delete(`/admin/projects/${id}`),

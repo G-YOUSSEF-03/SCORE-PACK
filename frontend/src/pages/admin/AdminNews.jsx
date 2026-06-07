@@ -15,11 +15,14 @@ import {
 } from 'lucide-react'
 import { apiErrorMessage } from '../../api/client.js'
 import { newsApi } from '../../api/resources.js'
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 function AdminNews() {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [articleToDelete, setArticleToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const { notify } = useToast()
 
   const loadNews = async () => {
@@ -74,14 +77,18 @@ function AdminNews() {
     window.alert(`${article.title}\n\n${article.excerpt || article.content}`)
   }
 
-  const deleteArticle = async (article) => {
-    if (!window.confirm(`Supprimer "${article.title}" ?`)) return
+  const confirmDeleteArticle = async () => {
+    if (!articleToDelete) return
+    setDeleting(true)
     try {
-      await newsApi.remove(article.id)
+      await newsApi.remove(articleToDelete.id)
+      setArticleToDelete(null)
       notify('Actualité supprimée.')
       loadNews()
     } catch (error) {
       notify(apiErrorMessage(error, 'Suppression impossible.'), 'error')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -144,7 +151,7 @@ function AdminNews() {
             </thead>
             <tbody className="divide-y divide-[#e8edf4]">
               {articles.map((article) => (
-                <NewsRow key={article.id} article={article} onView={viewArticle} onEdit={saveArticle} onDelete={deleteArticle} />
+                <NewsRow key={article.id} article={article} onView={viewArticle} onEdit={saveArticle} onDelete={setArticleToDelete} />
               ))}
             </tbody>
           </table>
@@ -156,6 +163,17 @@ function AdminNews() {
           </div>
         ) : null}
       </section>
+      <ConfirmDeleteModal
+        open={Boolean(articleToDelete)}
+        title="Supprimer l'actualité"
+        message="Êtes-vous sûr de vouloir supprimer cette actualité ?"
+        details="Cette action est irréversible."
+        loading={deleting}
+        onCancel={() => {
+          if (!deleting) setArticleToDelete(null)
+        }}
+        onConfirm={confirmDeleteArticle}
+      />
     </div>
   )
 }

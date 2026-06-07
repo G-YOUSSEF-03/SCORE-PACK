@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { apiErrorMessage } from '../../api/client.js'
 import { usersApi } from '../../api/resources.js'
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
 const stats = [
@@ -129,6 +130,8 @@ const fallbackUsers = [
 function AdminUsers() {
   const [users, setUsers] = useState(fallbackUsers)
   const [loading, setLoading] = useState(true)
+  const [userToDelete, setUserToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const { notify } = useToast()
 
   const loadUsers = async () => {
@@ -165,14 +168,18 @@ function AdminUsers() {
     }
   }
 
-  const deleteUser = async (user) => {
-    if (!window.confirm(`Supprimer ${user.name} ?`)) return
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
+    setDeleting(true)
     try {
-      await usersApi.remove(user.id)
+      await usersApi.remove(userToDelete.id)
+      setUserToDelete(null)
       notify('Utilisateur supprimé.')
       loadUsers()
     } catch (error) {
       notify(apiErrorMessage(error, 'Suppression impossible.'), 'error')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -236,7 +243,7 @@ function AdminUsers() {
             </thead>
             <tbody className="divide-y divide-[#e8edf4]">
               {users.map((user) => (
-                <UserRow key={user.id} user={user} onEdit={saveUser} onDelete={deleteUser} />
+                <UserRow key={user.id} user={user} onEdit={saveUser} onDelete={setUserToDelete} />
               ))}
             </tbody>
           </table>
@@ -254,6 +261,17 @@ function AdminUsers() {
           </div>
         </div>
       </section>
+      <ConfirmDeleteModal
+        open={Boolean(userToDelete)}
+        title="Supprimer l'utilisateur"
+        message="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
+        details="Cette action est irréversible."
+        loading={deleting}
+        onCancel={() => {
+          if (!deleting) setUserToDelete(null)
+        }}
+        onConfirm={confirmDeleteUser}
+      />
     </div>
   )
 }

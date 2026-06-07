@@ -13,7 +13,6 @@ import {
   Search,
   Settings,
   UserRound,
-  UsersRound,
   X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -27,7 +26,6 @@ const adminLinks = [
   { to: '/admin/quotes', label: 'Demandes de devis', icon: FileText },
   { to: '/admin/messages', label: 'Gestion des Messages', icon: MessageSquareText },
   { to: '/admin/news', label: 'Actualités', icon: Newspaper },
-  { to: '/admin/teams', label: 'Équipes', icon: UsersRound },
   { to: '/admin/users', label: 'Utilisateurs', icon: UserRound },
   { to: '/admin/settings', label: 'Paramètres', icon: Settings },
 ]
