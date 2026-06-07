@@ -10,11 +10,18 @@ class QuoteRequest extends Model
     use HasFactory;
 
     protected $fillable = [
-        'client_name',
+        'full_name',
         'phone',
         'email',
+        'project_type',
+        'budget',
         'project_title',
         'message',
         'status',
+        'is_read',
+    ];
+
+    protected $casts = [
+        'is_read' => 'boolean',
     ];
 }

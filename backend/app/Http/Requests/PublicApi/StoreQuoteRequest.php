@@ -14,11 +14,13 @@ class StoreQuoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_name' => ['required', 'string', 'max:255'],
+            'full_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:50'],
             'email' => ['required', 'email', 'max:255'],
+            'project_type' => ['required', 'string', 'max:255'],
+            'budget' => ['required', 'string', 'max:255'],
             'project_title' => ['required', 'string', 'max:255'],
-            'message' => ['nullable', 'string'],
+            'message' => ['required', 'string'],
         ];
     }
 }

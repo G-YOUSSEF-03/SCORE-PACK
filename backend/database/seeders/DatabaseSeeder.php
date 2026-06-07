@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\News;
 use App\Models\Project;
-use App\Models\QuoteRequest;
 use App\Models\Service;
 use App\Models\Setting;
 use App\Models\User;
@@ -64,11 +63,6 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Centrale solaire à Ouarzazate', 'category' => 'Énergie', 'location' => 'Ouarzazate', 'short_description' => 'Analyse de rentabilité et structuration du financement.', 'detailed_description' => 'Analyse de rentabilité et structuration du financement.', 'client' => 'Client SCORE PACK', 'project_date' => now()->subMonths(4)->toDateString(), 'estimated_budget' => '30 000 000 MAD', 'duration' => '30 mois', 'slug' => 'centrale-solaire-ouarzazate', 'meta_title' => 'Centrale solaire à Ouarzazate | SCORE PACK', 'meta_description' => 'Découvrez notre projet solaire à Ouarzazate.', 'status' => 'published', 'is_published' => true],
             ['title' => 'Aménagement routier à Marrakech', 'category' => 'Infrastructure', 'location' => 'Marrakech', 'short_description' => 'Étude budgétaire et montage du dossier technique.', 'detailed_description' => 'Étude budgétaire et montage du dossier technique.', 'client' => 'Client SCORE PACK', 'project_date' => now()->subMonths(5)->toDateString(), 'estimated_budget' => '10 000 000 MAD', 'duration' => '12 mois', 'slug' => 'amenagement-routier-marrakech', 'meta_title' => 'Aménagement routier à Marrakech | SCORE PACK', 'meta_description' => 'Découvrez notre projet infrastructure à Marrakech.', 'status' => 'draft', 'is_published' => false],
         ])->each(fn (array $project) => Project::updateOrCreate(['title' => $project['title']], $project));
-
-        collect([
-            ['client_name' => 'Mohamed El Amrani', 'phone' => '+212 6 12 34 56 78', 'email' => 'm.elamrani@email.com', 'project_title' => 'Complexe résidentiel à Casablanca', 'message' => 'Je souhaite recevoir un devis détaillé.', 'status' => 'new'],
-            ['client_name' => 'Sara Benali', 'phone' => '+212 6 98 76 54 32', 'email' => 's.benali@email.com', 'project_title' => 'Unité de production industrielle', 'message' => 'Merci de me contacter pour une étude technique.', 'status' => 'in_progress'],
-        ])->each(fn (array $quote) => QuoteRequest::updateOrCreate(['email' => $quote['email'], 'project_title' => $quote['project_title']], $quote));
 
         collect([
             [

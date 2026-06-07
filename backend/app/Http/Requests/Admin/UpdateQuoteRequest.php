@@ -15,12 +15,14 @@ class UpdateQuoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'full_name' => ['sometimes', 'required', 'string', 'max:255'],
             'phone' => ['sometimes', 'required', 'string', 'max:50'],
             'email' => ['sometimes', 'required', 'email', 'max:255'],
+            'project_type' => ['sometimes', 'required', 'string', 'max:255'],
+            'budget' => ['sometimes', 'required', 'string', 'max:255'],
             'project_title' => ['sometimes', 'required', 'string', 'max:255'],
-            'message' => ['nullable', 'string'],
-            'status' => ['sometimes', 'required', Rule::in(['new', 'in_progress', 'pending', 'processed'])],
+            'message' => ['sometimes', 'required', 'string'],
+            'status' => ['sometimes', 'required', Rule::in(['new', 'in_progress', 'treated'])],
         ];
     }
 }

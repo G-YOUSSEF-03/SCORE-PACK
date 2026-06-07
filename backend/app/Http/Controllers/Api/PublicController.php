@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\PublicApi\StoreQuoteRequest;
 use App\Models\News;
 use App\Models\Project;
-use App\Models\QuoteRequest;
 use App\Models\Service;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -59,15 +57,4 @@ class PublicController extends Controller
         ]);
     }
 
-    public function quoteRequest(StoreQuoteRequest $request): JsonResponse
-    {
-        $quoteRequest = QuoteRequest::create($request->validated() + [
-            'status' => 'new',
-        ]);
-
-        return response()->json([
-            'message' => 'Votre demande de devis a ete envoyee.',
-            'data' => $quoteRequest,
-        ], 201);
-    }
 }

@@ -45,6 +45,7 @@ import AdminSettings from './pages/admin/AdminSettings.jsx'
 import AdminNews from './pages/admin/AdminNews.jsx'
 import { apiErrorMessage } from './api/client.js'
 import { publicApi } from './api/resources.js'
+import { useToast } from './context/ToastContext.jsx'
 
 const routes = [
   { label: 'Accueil', hash: '#accueil' },
@@ -710,8 +711,9 @@ function ProjectsPage({ publicData }) {
 }
 
 function QuoteRequestPage() {
+  const { notify } = useToast()
   const [form, setForm] = useState({
-    client_name: '',
+    full_name: '',
     email: '',
     phone: '',
     project_type: '',
@@ -740,15 +742,21 @@ function QuoteRequestPage() {
     setSubmitting(true)
     try {
       await publicApi.quoteRequest({
-        client_name: form.client_name,
+        full_name: form.full_name,
         email: form.email,
         phone: form.phone,
+        project_type: form.project_type,
+        budget: form.budget,
         project_title: form.project_title,
-        message: formatQuoteMessage(form),
+        message: form.message,
       })
-      setForm({ client_name: '', email: '', phone: '', project_type: '', project_title: '', budget: '', message: '' })
+      setForm({ full_name: '', email: '', phone: '', project_type: '', project_title: '', budget: '', message: '' })
       setStatus({ type: 'success', message: 'Votre demande de devis a été envoyée avec succès.' })
+      notify('Votre demande de devis a été envoyée avec succès.')
     } catch (error) {
+      if (error.response?.data?.errors) {
+        setErrors(Object.fromEntries(Object.entries(error.response.data.errors).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value])))
+      }
       setStatus({ type: 'error', message: apiErrorMessage(error, 'Impossible d’envoyer votre demande de devis.') })
     } finally {
       setSubmitting(false)
@@ -777,7 +785,7 @@ function QuoteRequestPage() {
 
         <form onSubmit={onSubmit} className="rounded-[16px] border border-[#E5EAF0] bg-white p-8 shadow-[0_16px_44px_rgba(15,39,71,0.07)]">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Nom complet" name="client_name" value={form.client_name} onChange={onChange} error={errors.client_name} />
+            <Input label="Nom complet" name="full_name" value={form.full_name} onChange={onChange} error={errors.full_name} />
             <Input label="Téléphone" name="phone" value={form.phone} onChange={onChange} error={errors.phone} />
           </div>
           <Input label="Email" name="email" type="email" value={form.email} onChange={onChange} error={errors.email} className="mt-4" />
@@ -804,23 +812,15 @@ function QuoteRequestPage() {
 
 function validateQuoteForm(form) {
   const errors = {}
-  if (!form.client_name.trim()) errors.client_name = 'Le nom est obligatoire.'
+  if (!form.full_name.trim()) errors.full_name = 'Le nom est obligatoire.'
   if (!form.phone.trim()) errors.phone = 'Le téléphone est obligatoire.'
   if (!form.email.trim()) errors.email = 'L’email est obligatoire.'
   if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'L’email est invalide.'
   if (!form.project_type.trim()) errors.project_type = 'Le type de projet est obligatoire.'
   if (!form.project_title.trim()) errors.project_title = 'Le titre du projet est obligatoire.'
   if (!form.budget.trim()) errors.budget = 'Le budget est obligatoire.'
+  if (!form.message.trim()) errors.message = 'Le message est obligatoire.'
   return errors
-}
-
-function formatQuoteMessage(form) {
-  return [
-    `Type de projet: ${form.project_type}`,
-    `Budget: ${form.budget}`,
-    '',
-    form.message,
-  ].filter(Boolean).join('\n')
 }
 
 // eslint-disable-next-line no-unused-vars

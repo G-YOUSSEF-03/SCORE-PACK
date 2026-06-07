@@ -9,7 +9,7 @@ export const publicApi = {
   news: () => api.get('/public/news').then(unwrap),
   newsDetails: (slug) => api.get(`/public/news/${slug}`).then(unwrap),
   settings: () => api.get('/public/settings').then(unwrap),
-  quoteRequest: (payload) => api.post('/public/quote-requests', payload).then(unwrap),
+  quoteRequest: (payload) => api.post('/quote-requests', payload).then(unwrap),
   contactMessage: (payload) => api.post('/contact/messages', payload).then(unwrap),
 }
 
@@ -45,9 +45,12 @@ export const adminSettingsApi = {
 }
 
 export const quotesApi = {
-  list: () => api.get('/admin/quote-requests').then(unwrap),
+  list: (params = {}) => api.get('/admin/quote-requests', { params }).then(unwrap),
   show: (id) => api.get(`/admin/quote-requests/${id}`).then(unwrap),
   update: (id, payload) => api.patch(`/admin/quote-requests/${id}`, payload).then(unwrap),
+  markRead: (id) => api.patch(`/admin/quote-requests/${id}/read`).then(unwrap),
+  updateStatus: (id, status) => api.patch(`/admin/quote-requests/${id}/status`, { status }).then(unwrap),
+  reply: (id, payload) => api.post(`/admin/quote-requests/${id}/reply`, payload),
   remove: (id) => api.delete(`/admin/quote-requests/${id}`),
 }
 

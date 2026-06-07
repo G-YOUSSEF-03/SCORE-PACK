@@ -100,8 +100,8 @@ function AdminDashboard() {
   const quoteRows = dashboard?.recent_quote_requests?.length
     ? dashboard.recent_quote_requests.map((quote) => ({
         title: quote.project_title,
-        category: quote.client_name,
-        status: quote.status === "new" ? "Nouveau" : "En cours",
+        category: quote.full_name,
+        status: quote.status === "new" ? "Nouveau" : quote.status === "treated" ? "Traité" : "En cours",
         date: formatDate(quote.created_at),
       }))
     : [

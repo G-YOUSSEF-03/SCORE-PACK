@@ -10,12 +10,15 @@ return new class extends Migration
     {
         Schema::create('quote_requests', function (Blueprint $table) {
             $table->id();
-            $table->string('client_name');
+            $table->string('full_name');
             $table->string('phone');
             $table->string('email');
+            $table->string('project_type');
+            $table->string('budget');
             $table->string('project_title');
-            $table->text('message')->nullable();
+            $table->text('message');
             $table->string('status')->default('new')->index();
+            $table->boolean('is_read')->default(false)->index();
             $table->timestamps();
         });
     }
