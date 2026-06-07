@@ -62,7 +62,7 @@ const stats = [
 const defaultSettings = {
   company_name: 'SCORE PACK',
   tagline: 'Bureau d’études des projets d’investissement',
-  email: 'contact@scorepack.ma',
+  email: 'youssefelgourari1@gmail.com',
   phone: '+212 6 12 34 56 78',
   secondary_phone: '+212 5 22 98 76 54',
   address: '123 Boulevard Mohammed V, Résidence Al Qods, 5ème étage',
@@ -763,9 +763,9 @@ function QuoteRequestPage() {
               <Phone className="text-[#C79A4A]" size={20} />
               +212 6 12 34 56 78
             </a>
-            <a href="mailto:contact@scorepack.ma" className="flex items-center gap-4">
+            <a href="mailto:youssefelgourari1@gmail.com" className="flex items-center gap-4">
               <Mail className="text-[#C79A4A]" size={20} />
-              contact@scorepack.ma
+              youssefelgourari1@gmail.com
             </a>
           </div>
         </div>
@@ -830,9 +830,9 @@ function ContactPage() {
               <Phone className="text-[#C79A4A]" size={20} />
               +212 6 12 34 56 78
             </a>
-            <a href="mailto:contact@scorepack.ma" className="flex items-center gap-4">
+            <a href="mailto:youssefelgourari1@gmail.com" className="flex items-center gap-4">
               <Mail className="text-[#C79A4A]" size={20} />
-              contact@scorepack.ma
+              youssefelgourari1@gmail.com
             </a>
           </div>
         </div>

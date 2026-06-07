@@ -26,7 +26,7 @@ const tabs = [
 const defaultForm = {
   company_name: 'SCORE PACK',
   tagline: 'Bureau d’études des projets d’investissement',
-  email: 'contact@scorepack.ma',
+  email: 'youssefelgourari1@gmail.com',
   phone: '+212 6 12 34 56 78',
   secondary_phone: '+212 5 22 98 76 54',
   address: '123 Boulevard Mohammed V, Résidence Al Qods, 5ème étage',

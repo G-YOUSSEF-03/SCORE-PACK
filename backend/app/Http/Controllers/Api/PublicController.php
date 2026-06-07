@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\PublicApi\StoreContactMessageRequest;
 use App\Http\Requests\PublicApi\StoreQuoteRequest;
-use App\Models\ContactMessage;
 use App\Models\News;
 use App\Models\Project;
 use App\Models\QuoteRequest;
@@ -68,20 +66,8 @@ class PublicController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Votre demande de devis a été envoyée.',
+            'message' => 'Votre demande de devis a ete envoyee.',
             'data' => $quoteRequest,
-        ], 201);
-    }
-
-    public function contactMessage(StoreContactMessageRequest $request): JsonResponse
-    {
-        $message = ContactMessage::create($request->validated() + [
-            'status' => 'new',
-        ]);
-
-        return response()->json([
-            'message' => 'Votre message a été envoyé.',
-            'data' => $message,
         ], 201);
     }
 }

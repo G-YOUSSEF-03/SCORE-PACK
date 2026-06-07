@@ -3,57 +3,81 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ReplyContactMessageRequest;
 use App\Models\ContactMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ContactMessageController extends Controller
 {
     public function index(): JsonResponse
     {
+        $total = ContactMessage::count();
+        $unread = ContactMessage::where('is_read', false)->count();
+        $read = ContactMessage::where('is_read', true)->count();
+
+        $messages = ContactMessage::query()
+            ->orderBy('is_read')
+            ->latest()
+            ->get();
+
         return response()->json([
-            'data' => ContactMessage::latest()->paginate(15),
+            'stats' => [
+                'total' => $total,
+                'unread' => $unread,
+                'read' => $read,
+                'pending' => $unread,
+            ],
+            'messages' => $messages,
         ]);
     }
 
     public function show(ContactMessage $contactMessage): JsonResponse
     {
-        if ($contactMessage->status === 'new') {
-            $contactMessage->update(['status' => 'read']);
+        return response()->json([
+            'data' => $contactMessage,
+        ]);
+    }
+
+    public function markAsRead(ContactMessage $contactMessage): JsonResponse
+    {
+        $contactMessage->update(['is_read' => true]);
+
+        return response()->json([
+            'message' => 'Message marque comme lu.',
+            'data' => $contactMessage,
+        ]);
+    }
+
+    public function reply(Request $request, ContactMessage $contactMessage): JsonResponse
+    {
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        try {
+            Mail::send('emails.contact-reply', [
+                'contactMessage' => $contactMessage,
+                'replyMessage' => trim(strip_tags($data['message'])),
+            ], function ($mail) use ($contactMessage): void {
+                $mail->to($contactMessage->email, $contactMessage->full_name)
+                    ->from(config('mail.from.address'), config('mail.from.name'))
+                    ->subject('Re: '.$contactMessage->subject);
+            });
+        } catch (\Throwable $exception) {
+            Log::warning('Contact reply email failed.', [
+                'contact_message_id' => $contactMessage->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Impossible d envoyer la reponse pour le moment.',
+            ], 500);
         }
 
         return response()->json([
-            'data' => $contactMessage->load('repliedBy:id,name,email'),
-        ]);
-    }
-
-    public function reply(ReplyContactMessageRequest $request, ContactMessage $contactMessage): JsonResponse
-    {
-        $contactMessage->update([
-            'reply' => $request->validated('reply'),
-            'status' => $request->validated('status', 'replied'),
-            'replied_by' => $request->user()->id,
-            'replied_at' => now(),
-        ]);
-
-        return response()->json([
-            'message' => 'Réponse enregistrée.',
-            'data' => $contactMessage->load('repliedBy:id,name,email'),
-        ]);
-    }
-
-    public function update(Request $request, ContactMessage $contactMessage): JsonResponse
-    {
-        $data = $request->validate([
-            'status' => ['required', 'in:new,read,replied,pending'],
-        ]);
-
-        $contactMessage->update($data);
-
-        return response()->json([
-            'message' => 'Message mis à jour.',
-            'data' => $contactMessage,
+            'message' => 'Reponse envoyee avec succes.',
         ]);
     }
 
@@ -61,6 +85,8 @@ class ContactMessageController extends Controller
     {
         $contactMessage->delete();
 
-        return response()->json(['message' => 'Message supprimé.']);
+        return response()->json([
+            'message' => 'Message supprime.',
+        ]);
     }
 }

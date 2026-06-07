@@ -9,8 +9,11 @@ use App\Http\Controllers\Api\Admin\ServiceController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\PublicController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('contact/messages', [ContactController::class, 'store'])->middleware('throttle:contact');
 
 Route::prefix('public')->group(function (): void {
     Route::get('services', [PublicController::class, 'services']);
@@ -20,7 +23,7 @@ Route::prefix('public')->group(function (): void {
     Route::get('news/{slug}', [PublicController::class, 'newsDetails']);
     Route::get('settings', [PublicController::class, 'settings']);
     Route::post('quote-requests', [PublicController::class, 'quoteRequest']);
-    Route::post('contact-messages', [PublicController::class, 'contactMessage']);
+    Route::post('contact-messages', [ContactController::class, 'store'])->middleware('throttle:contact');
 });
 
 Route::prefix('auth')->group(function (): void {
@@ -49,7 +52,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function ()
 
     Route::get('contact-messages', [ContactMessageController::class, 'index']);
     Route::get('contact-messages/{contactMessage}', [ContactMessageController::class, 'show']);
-    Route::patch('contact-messages/{contactMessage}', [ContactMessageController::class, 'update']);
+    Route::patch('contact-messages/{contactMessage}/read', [ContactMessageController::class, 'markAsRead']);
     Route::post('contact-messages/{contactMessage}/reply', [ContactMessageController::class, 'reply']);
     Route::delete('contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy']);
 });

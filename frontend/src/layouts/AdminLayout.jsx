@@ -25,7 +25,7 @@ const adminLinks = [
   { to: '/admin/services', label: 'Services', icon: BriefcaseBusiness },
   { to: '/admin/projects', label: 'Projets', icon: FolderKanban },
   { to: '/admin/quotes', label: 'Demandes de devis', icon: FileText },
-  { to: '/admin/messages', label: 'Messages / Contacts', icon: MessageSquareText },
+  { to: '/admin/messages', label: 'Gestion des Messages', icon: MessageSquareText },
   { to: '/admin/news', label: 'Actualités', icon: Newspaper },
   { to: '/admin/teams', label: 'Équipes', icon: UsersRound },
   { to: '/admin/users', label: 'Utilisateurs', icon: UserRound },

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\ContactMessage;
 use App\Models\News;
 use App\Models\Project;
 use App\Models\QuoteRequest;
@@ -38,7 +37,7 @@ class DatabaseSeeder extends Seeder
             [
                 'company_name' => 'SCORE PACK',
                 'tagline' => 'Bureau d’études des projets d’investissement',
-                'email' => 'contact@scorepack.ma',
+                'email' => 'youssefelgourari1@gmail.com',
                 'phone' => '+212 6 12 34 56 78',
                 'secondary_phone' => '+212 5 22 98 76 54',
                 'address' => '123 Boulevard Mohammed V, Résidence Al Qods, 5ème étage',
@@ -70,11 +69,6 @@ class DatabaseSeeder extends Seeder
             ['client_name' => 'Mohamed El Amrani', 'phone' => '+212 6 12 34 56 78', 'email' => 'm.elamrani@email.com', 'project_title' => 'Complexe résidentiel à Casablanca', 'message' => 'Je souhaite recevoir un devis détaillé.', 'status' => 'new'],
             ['client_name' => 'Sara Benali', 'phone' => '+212 6 98 76 54 32', 'email' => 's.benali@email.com', 'project_title' => 'Unité de production industrielle', 'message' => 'Merci de me contacter pour une étude technique.', 'status' => 'in_progress'],
         ])->each(fn (array $quote) => QuoteRequest::updateOrCreate(['email' => $quote['email'], 'project_title' => $quote['project_title']], $quote));
-
-        collect([
-            ['name' => 'Mohamed El Amrani', 'email' => 'm.elamrani@email.com', 'phone' => '+212 6 12 34 56 78', 'subject' => "Demande d'information sur vos services", 'message' => "Bonjour, je souhaite avoir plus d'informations sur vos services.", 'status' => 'new'],
-            ['name' => 'Sara Benali', 'email' => 's.benali@email.com', 'phone' => '+212 6 98 76 54 32', 'subject' => 'Devis pour étude technique', 'message' => 'Bonjour, je voudrais demander un devis.', 'status' => 'pending'],
-        ])->each(fn (array $message) => ContactMessage::updateOrCreate(['email' => $message['email'], 'subject' => $message['subject']], $message));
 
         collect([
             [

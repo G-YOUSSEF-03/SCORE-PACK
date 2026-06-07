@@ -10,7 +10,7 @@ export const publicApi = {
   newsDetails: (slug) => api.get(`/public/news/${slug}`).then(unwrap),
   settings: () => api.get('/public/settings').then(unwrap),
   quoteRequest: (payload) => api.post('/public/quote-requests', payload).then(unwrap),
-  contactMessage: (payload) => api.post('/public/contact-messages', payload).then(unwrap),
+  contactMessage: (payload) => api.post('/contact/messages', payload).then(unwrap),
 }
 
 export const dashboardApi = {
@@ -51,10 +51,10 @@ export const quotesApi = {
 }
 
 export const messagesApi = {
-  list: () => api.get('/admin/contact-messages').then(unwrap),
+  list: () => api.get('/admin/contact-messages').then((response) => response.data),
   show: (id) => api.get(`/admin/contact-messages/${id}`).then(unwrap),
-  update: (id, payload) => api.patch(`/admin/contact-messages/${id}`, payload).then(unwrap),
-  reply: (id, payload) => api.post(`/admin/contact-messages/${id}/reply`, payload).then(unwrap),
+  markRead: (id) => api.patch(`/admin/contact-messages/${id}/read`).then(unwrap),
+  reply: (id, payload) => api.post(`/admin/contact-messages/${id}/reply`, payload),
   remove: (id) => api.delete(`/admin/contact-messages/${id}`),
 }
 

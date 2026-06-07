@@ -4,10 +4,12 @@ import aboutMeeting from '../../assets/corporate/about-meeting.png'
 import { apiErrorMessage } from '../../api/client.js'
 import { publicApi } from '../../api/resources.js'
 
+const companyAddress = 'RUE SARIA BEN ZOUNAIM ETG 3 APPT 3, PALMIER, CASABLANCA, MOROCCO'
+
 const fallbackSettings = {
   company_name: 'SCORE PACK',
   tagline: 'Bureau d’études des projets d’investissement',
-  email: 'contact@scorepack.ma',
+  email: 'youssefelgourari1@gmail.com',
   phone: '+212 6 12 34 56 78',
   secondary_phone: '+212 5 22 98 76 54',
   address: '123 Boulevard Mohammed V, Résidence Al Qods, 5ème étage',
@@ -30,7 +32,7 @@ const contactCards = [
   {
     icon: Mail,
     title: 'Email',
-    lines: ['contact@scorepack.ma', 'devis@scorepack.ma'],
+    lines: ['youssefelgourari1@gmail.com'],
   },
   {
     icon: Clock3,
@@ -67,7 +69,7 @@ const faqs = [
 function ContactPage({ publicData }) {
   const settings = { ...fallbackSettings, ...(publicData?.settings || {}) }
   const cards = buildContactCards(settings)
-  const [form, setForm] = useState({ name: '', phone: '', email: '', subject: '', message: '' })
+  const [form, setForm] = useState({ full_name: '', phone: '', email: '', subject: '', message: '' })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState({ type: '', message: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -89,7 +91,7 @@ function ContactPage({ publicData }) {
     setSubmitting(true)
     try {
       await publicApi.contactMessage(form)
-      setForm({ name: '', phone: '', email: '', subject: '', message: '' })
+      setForm({ full_name: '', phone: '', email: '', subject: '', message: '' })
       setStatus({ type: 'success', message: 'Votre message a été envoyé avec succès.' })
     } catch (error) {
       setStatus({ type: 'error', message: apiErrorMessage(error, 'Impossible d’envoyer votre message.') })
@@ -138,7 +140,7 @@ function ContactPage({ publicData }) {
         <Reveal as="form" delay={0.1} onSubmit={onSubmit} className="rounded-[22px] border border-[#e6ebf2] bg-white p-6 shadow-[0_18px_50px_rgba(6,31,73,0.08)] sm:p-8">
           <h2 className="text-[28px] font-extrabold tracking-[-0.025em] text-[#061f49]">Envoyez-nous un message</h2>
           <div className="mt-7 grid gap-5 sm:grid-cols-2">
-            <Field label="Nom complet *" name="name" value={form.name} onChange={onChange} error={errors.name} />
+            <Field label="Nom complet *" name="full_name" value={form.full_name} onChange={onChange} error={errors.full_name} />
             <Field label="Téléphone *" name="phone" value={form.phone} onChange={onChange} error={errors.phone} />
             <Field label="Email *" type="email" name="email" value={form.email} onChange={onChange} error={errors.email} />
             <Field label="Sujet *" name="subject" value={form.subject} onChange={onChange} error={errors.subject} />
@@ -216,7 +218,7 @@ function ContactInfoCard({ icon: Icon, title, lines }) {
 }
 
 function buildContactCards(settings) {
-  const address = [settings.address, settings.city, settings.country].filter(Boolean).join(', ')
+  const address = companyAddress
   const hours = String(settings.working_hours || fallbackSettings.working_hours).split('/').map((line) => line.trim())
 
   return [
@@ -259,8 +261,9 @@ function Field({ label, type = 'text', error, ...props }) {
 
 function validateContactForm(form) {
   const errors = {}
-  if (!form.name.trim()) errors.name = 'Le nom est obligatoire.'
+  if (!form.full_name.trim()) errors.full_name = 'Le nom est obligatoire.'
   if (!form.phone.trim()) errors.phone = 'Le téléphone est obligatoire.'
+  if (form.phone && !/^\+?[0-9\s().-]{7,20}$/.test(form.phone.trim())) errors.phone = 'Le téléphone est invalide.'
   if (!form.email.trim()) errors.email = 'L’email est obligatoire.'
   if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'L’email est invalide.'
   if (!form.subject.trim()) errors.subject = 'Le sujet est obligatoire.'
@@ -269,25 +272,25 @@ function validateContactForm(form) {
 }
 
 function MapCard({ settings }) {
+  const encodedAddress = encodeURIComponent(companyAddress)
+  const mapSrc = `https://www.google.com/maps?q=${encodedAddress}&output=embed`
+  const directionsHref = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`
+
   return (
     <div className="relative min-h-[520px] overflow-hidden rounded-[22px] border border-[#e6ebf2] bg-[#dfe7df] shadow-[0_18px_50px_rgba(6,31,73,0.08)]">
-      <div className="absolute inset-0 bg-[linear-gradient(30deg,rgba(255,255,255,0.58)_0_11%,transparent_11%_18%,rgba(255,255,255,0.5)_18%_29%,transparent_29%_42%,rgba(255,255,255,0.48)_42%_53%,transparent_53%_100%),linear-gradient(118deg,transparent_0_18%,rgba(184,132,44,0.22)_18%_22%,transparent_22%_100%),linear-gradient(82deg,transparent_0_38%,rgba(6,31,73,0.16)_38%_42%,transparent_42%_100%)]" />
-      <div className="absolute left-[9%] top-[18%] h-[62%] w-[11px] rotate-[24deg] rounded-full bg-white/90 shadow-[0_0_0_1px_rgba(6,31,73,0.04)]" />
-      <div className="absolute left-[28%] top-[-8%] h-[120%] w-[14px] -rotate-[38deg] rounded-full bg-white/85 shadow-[0_0_0_1px_rgba(6,31,73,0.04)]" />
-      <div className="absolute right-[19%] top-[5%] h-[95%] w-[12px] rotate-[34deg] rounded-full bg-white/90 shadow-[0_0_0_1px_rgba(6,31,73,0.04)]" />
-      <div className="absolute bottom-[18%] left-[-7%] h-[14px] w-[112%] -rotate-[8deg] rounded-full bg-white/95 shadow-[0_0_0_1px_rgba(6,31,73,0.04)]" />
-      <div className="absolute left-[13%] top-[12%] h-24 w-32 rounded-[18px] bg-[#b9d4b9]/70" />
-      <div className="absolute bottom-[13%] right-[10%] h-28 w-40 rounded-[20px] bg-[#c7d8c4]/80" />
-      <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-        <span className="relative grid size-14 place-items-center rounded-full bg-[#b8842c] text-white shadow-[0_16px_34px_rgba(184,132,44,0.34)]">
-          <MapPin size={28} fill="currentColor" strokeWidth={1.8} />
-        </span>
-      </div>
+      <iframe
+        title="SCORE PACK Google Maps"
+        src={mapSrc}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        className="absolute inset-0 h-full w-full border-0"
+        allowFullScreen
+      />
       <div className="absolute left-1/2 top-[55%] z-20 w-[260px] -translate-x-1/2 rounded-[16px] bg-white p-4 shadow-[0_18px_44px_rgba(6,31,73,0.18)]">
         <p className="text-[15px] font-extrabold text-[#061f49]">{settings.company_name}</p>
-        <p className="mt-2 text-[13px] font-semibold leading-5 text-[#53647c]">{settings.tagline}<br />{settings.city}, {settings.country}</p>
+        <p className="mt-2 text-[13px] font-semibold leading-5 text-[#53647c]">{companyAddress}</p>
       </div>
-      <div className="absolute left-5 top-5 rounded-[10px] bg-white px-4 py-2 text-xs font-extrabold text-[#061f49] shadow-[0_10px_24px_rgba(6,31,73,0.12)]">Map</div>
+      <a href={directionsHref} target="_blank" rel="noreferrer" className="absolute left-5 top-5 rounded-[10px] bg-white px-4 py-2 text-xs font-extrabold text-[#061f49] shadow-[0_10px_24px_rgba(6,31,73,0.12)] transition hover:text-[#b8842c]">Get Directions</a>
     </div>
   )
 }
