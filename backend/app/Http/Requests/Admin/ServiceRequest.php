@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class ServiceRequest extends FormRequest
 {
@@ -18,7 +17,7 @@ class ServiceRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'icon' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'is_active' => ['required', 'boolean'],
             'order' => ['required', 'integer', 'min:0'],
         ];
     }

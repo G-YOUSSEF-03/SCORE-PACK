@@ -3,7 +3,7 @@ import { api } from './client.js'
 const unwrap = (response) => response.data.data
 
 export const publicApi = {
-  services: () => api.get('/public/services').then(unwrap),
+  services: () => api.get('/services').then(unwrap),
   serviceDetails: (slug) => api.get(`/public/services/${slug}`).then(unwrap),
   projects: () => api.get('/public/projects').then(unwrap),
   news: () => api.get('/public/news').then(unwrap),

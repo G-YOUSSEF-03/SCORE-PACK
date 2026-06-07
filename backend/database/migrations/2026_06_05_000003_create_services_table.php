@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->string('icon')->nullable();
+            $table->boolean('is_active')->default(true)->index();
             $table->string('status')->default('active')->index();
             $table->unsignedInteger('order')->default(0)->index();
             $table->timestamps();

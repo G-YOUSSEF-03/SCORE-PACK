@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('contact/messages', [ContactController::class, 'store'])->middleware('throttle:contact');
 Route::post('quote-requests', [PublicQuoteRequestController::class, 'store'])->middleware('throttle:quote-requests');
+Route::get('services', [PublicController::class, 'services']);
 
 Route::prefix('public')->group(function (): void {
     Route::get('services', [PublicController::class, 'services']);

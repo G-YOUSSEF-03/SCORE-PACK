@@ -1,8 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BarChart3,
   CalendarDays,
@@ -18,112 +15,82 @@ import {
   Plus,
   Settings,
   Trash2,
+  X,
 } from 'lucide-react'
 import { apiErrorMessage } from '../../api/client.js'
 import { servicesApi } from '../../api/resources.js'
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
-const stats = [
+const statCards = [
   {
     icon: ClipboardList,
-    value: '6',
+    key: 'total',
     label: 'Total des services',
     detail: 'Tous les services disponibles',
     tone: 'navy',
   },
   {
     icon: ClipboardList,
-    value: '6',
+    key: 'active',
     label: 'Services actifs',
     detail: 'Visibles sur le site',
     tone: 'gold',
   },
   {
     icon: EyeOff,
-    value: '0',
+    key: 'inactive',
     label: 'Services inactifs',
     detail: 'Masqués du site',
     tone: 'navy',
   },
   {
     icon: CalendarDays,
-    value: '12 mai 2024',
+    key: 'latest_updated_at',
     label: 'Dernière mise à jour',
-    detail: 'Il y a 2 jours',
+    detail: 'Service le plus récent',
     tone: 'gold',
   },
 ]
 
-const fallbackServices = [
-  {
-    id: 1,
-    icon: BarChart3,
-    title: 'Études de faisabilité',
-    description: 'Nous analysons la viabilité de votre projet sous tous ses aspects (techniques, économiques, financiers et juridiques).',
-    status: 'Actif',
-    order: 1,
-    date: '10 mai 2024',
-  },
-  {
-    id: 2,
-    icon: Settings,
-    title: 'Études techniques',
-    description: 'Conception technique détaillée, dimensionnement et choix technologiques adaptés à votre projet.',
-    status: 'Actif',
-    order: 2,
-    date: '10 mai 2024',
-  },
-  {
-    id: 3,
-    icon: PieChart,
-    title: 'Études financières',
-    description: 'Prévisions financières, analyses de rentabilité et plans de financement sur mesure.',
-    status: 'Actif',
-    order: 3,
-    date: '10 mai 2024',
-  },
-  {
-    id: 4,
-    icon: Folder,
-    title: 'Montage de dossiers',
-    description: 'Constitution de dossiers solides et complets pour banques, investisseurs et organismes de financement.',
-    status: 'Actif',
-    order: 4,
-    date: '10 mai 2024',
-  },
-  {
-    id: 5,
-    icon: Handshake,
-    title: 'Accompagnement',
-    description: "Nous vous accompagnons à chaque étape de votre projet jusqu'à sa concrétisation.",
-    status: 'Actif',
-    order: 5,
-    date: '10 mai 2024',
-  },
-  {
-    id: 6,
-    icon: ClipboardList,
-    title: 'Conseil stratégique',
-    description: 'Conseils personnalisés pour optimiser vos décisions et maximiser la performance de vos investissements.',
-    status: 'Actif',
-    order: 6,
-    date: '10 mai 2024',
-  },
-]
+const emptyForm = {
+  title: '',
+  description: '',
+  icon: 'clipboard-list',
+  order: 0,
+  is_active: true,
+}
 
 function AdminServices() {
-  const [services, setServices] = useState(fallbackServices)
+  const [services, setServices] = useState([])
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, latest_updated_at: null })
+  const [meta, setMeta] = useState({ current_page: 1, last_page: 1, from: 0, to: 0, total: 0 })
+  const [page, setPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useState('all')
   const [loading, setLoading] = useState(true)
   const [serviceToDelete, setServiceToDelete] = useState(null)
+  const [editingService, setEditingService] = useState(null)
+  const [form, setForm] = useState(emptyForm)
+  const [errors, setErrors] = useState({})
+  const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const { notify } = useToast()
 
-  const loadServices = async () => {
+  const loadServices = async (nextPage = page) => {
     setLoading(true)
     try {
-      const response = await servicesApi.list()
-      setServices((response.data || response).map(mapService))
+      const response = await servicesApi.list({ page: nextPage })
+      const servicePage = response.services || response
+      const rows = Array.isArray(servicePage.data) ? servicePage.data : servicePage
+      setServices(rows.map(mapService))
+      setStats(response.stats || calculateStats(rows))
+      setMeta({
+        current_page: servicePage.current_page || nextPage,
+        last_page: servicePage.last_page || 1,
+        from: servicePage.from || (rows.length ? 1 : 0),
+        to: servicePage.to || rows.length,
+        total: servicePage.total || rows.length,
+      })
     } catch (error) {
       notify(apiErrorMessage(error, 'Impossible de charger les services.'), 'error')
     } finally {
@@ -132,32 +99,70 @@ function AdminServices() {
   }
 
   useEffect(() => {
-    loadServices()
-  }, [])
+    loadServices(page)
+  }, [page])
 
-  const addService = async () => {
-    const title = window.prompt('Titre du service')
-    if (!title) return
-    const description = window.prompt('Description du service') || ''
+  const visibleServices = useMemo(() => services.filter((service) => (
+    statusFilter === 'all' || service.rawStatus === statusFilter
+  )), [services, statusFilter])
+
+  const openCreate = () => {
+    setEditingService(null)
+    setForm({ ...emptyForm, order: services.length + 1 })
+    setErrors({})
+  }
+
+  const openEdit = async (service) => {
+    setErrors({})
     try {
-      await servicesApi.create({ title, description, icon: 'clipboard-list', status: 'active', order: services.length + 1 })
-      notify('Service ajouté.')
-      loadServices()
+      const fresh = await servicesApi.show(service.id)
+      setEditingService(fresh)
+      setForm({
+        title: fresh.title || '',
+        description: fresh.description || '',
+        icon: fresh.icon || 'clipboard-list',
+        order: fresh.order ?? 0,
+        is_active: Boolean(fresh.is_active),
+      })
     } catch (error) {
-      notify(apiErrorMessage(error, 'Création impossible.'), 'error')
+      notify(apiErrorMessage(error, 'Impossible de charger le service.'), 'error')
     }
   }
 
-  const editService = async (service) => {
-    const title = window.prompt('Titre du service', service.title)
-    if (!title) return
-    const description = window.prompt('Description du service', service.description) || service.description
+  const closeForm = () => {
+    setEditingService(null)
+    setForm(emptyForm)
+    setErrors({})
+  }
+
+  const saveService = async (event) => {
+    event.preventDefault()
+    setSaving(true)
+    setErrors({})
     try {
-      await servicesApi.update(service.id, { title, description, icon: service.iconName || 'clipboard-list', status: service.rawStatus || 'active', order: service.order })
-      notify('Service mis à jour.')
-      loadServices()
+      const payload = {
+        ...form,
+        order: Number(form.order || 0),
+        is_active: Boolean(form.is_active),
+      }
+
+      if (editingService) {
+        await servicesApi.update(editingService.id, payload)
+        notify('Service mis à jour.')
+      } else {
+        await servicesApi.create(payload)
+        notify('Service ajouté.')
+      }
+
+      closeForm()
+      loadServices(page)
     } catch (error) {
-      notify(apiErrorMessage(error, 'Mise à jour impossible.'), 'error')
+      if (error.response?.data?.errors) {
+        setErrors(Object.fromEntries(Object.entries(error.response.data.errors).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value])))
+      }
+      notify(apiErrorMessage(error, editingService ? 'Mise à jour impossible.' : 'Création impossible.'), 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -168,13 +173,15 @@ function AdminServices() {
       await servicesApi.remove(serviceToDelete.id)
       setServiceToDelete(null)
       notify('Service supprimé.')
-      loadServices()
+      loadServices(page)
     } catch (error) {
       notify(apiErrorMessage(error, 'Suppression impossible.'), 'error')
     } finally {
       setDeleting(false)
     }
   }
+
+  const pages = Array.from({ length: Math.max(1, meta.last_page) }, (_, index) => index + 1)
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
@@ -188,15 +195,15 @@ function AdminServices() {
           </nav>
         </div>
 
-        <button type="button" onClick={addService} className="inline-flex h-[54px] w-fit items-center gap-3 rounded-[8px] bg-[#061f49] px-7 text-[15px] font-extrabold text-white shadow-[0_14px_28px_rgba(6,31,73,0.18)] transition hover:bg-[#0b2d63]">
+        <button type="button" onClick={openCreate} className="inline-flex h-[54px] w-fit items-center gap-3 rounded-[8px] bg-[#061f49] px-7 text-[15px] font-extrabold text-white shadow-[0_14px_28px_rgba(6,31,73,0.18)] transition hover:bg-[#0b2d63]">
           <Plus size={22} />
           Ajouter un service
         </button>
       </section>
 
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
+        {statCards.map((stat) => (
+          <StatCard key={stat.label} {...stat} value={formatStatValue(stat.key, stats[stat.key])} />
         ))}
       </section>
 
@@ -204,16 +211,20 @@ function AdminServices() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="text-[22px] font-extrabold tracking-[-0.025em] text-[#071f49]">Liste des services</h2>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <button type="button" className="inline-flex h-[44px] items-center justify-between gap-7 rounded-[8px] border border-[#dce4ef] bg-white px-4 text-[14px] font-extrabold text-[#071f49]">
+            <label className="inline-flex h-[44px] items-center justify-between gap-7 rounded-[8px] border border-[#dce4ef] bg-white px-4 text-[14px] font-extrabold text-[#071f49]">
               <span className="inline-flex items-center gap-3">
                 <Filter size={17} />
-                Tous les statuts
+                Statut
               </span>
-              <ChevronDown size={17} />
-            </button>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="bg-transparent text-[14px] font-extrabold outline-none">
+                <option value="all">Tous</option>
+                <option value="active">Actifs</option>
+                <option value="inactive">Inactifs</option>
+              </select>
+            </label>
             <button type="button" className="inline-flex h-[44px] items-center justify-between gap-4 rounded-[8px] border border-[#dce4ef] bg-white px-4 text-[14px] font-extrabold text-[#071f49]">
               <span className="text-[#33496f]">Trier par :</span>
-              Plus récents
+              Ordre
               <ChevronDown size={17} />
             </button>
           </div>
@@ -221,7 +232,7 @@ function AdminServices() {
         {loading ? <p className="mt-4 text-sm font-bold text-[#52668c]">Chargement des services...</p> : null}
 
         <div className="mt-5 overflow-x-auto">
-          <table className="min-w-[1180px] w-full border-collapse text-left">
+          <table className="w-full min-w-[1180px] border-collapse text-left">
             <thead>
               <tr className="border-y border-[#e8edf4] bg-[#fbfcfe] text-[13px] font-extrabold text-[#24395f]">
                 <th className="w-[56px] px-3 py-5">#</th>
@@ -234,22 +245,42 @@ function AdminServices() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e8edf4]">
-              {services.map((service) => (
-                <ServiceRow key={service.id} service={service} onEdit={editService} onDelete={setServiceToDelete} />
+              {visibleServices.map((service) => (
+                <ServiceRow key={service.id} service={service} onEdit={openEdit} onDelete={setServiceToDelete} />
               ))}
+              {!loading && !visibleServices.length ? (
+                <tr>
+                  <td colSpan={7} className="px-3 py-10 text-center text-sm font-bold text-[#52668c]">Aucun service trouvé</td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
 
         <div className="flex flex-col gap-4 border-t border-[#e8edf4] pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[14px] font-medium text-[#33496f]">Affichage de 1 à 6 sur 6 services</p>
+          <p className="text-[14px] font-medium text-[#33496f]">Affichage de {meta.from || 0} à {meta.to || visibleServices.length} sur {meta.total || visibleServices.length} services</p>
           <div className="flex items-center gap-3">
-            <button type="button" className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#8a9ab5]">Précédent</button>
-            <button type="button" className="grid size-11 place-items-center rounded-[8px] bg-[#061f49] text-[15px] font-extrabold text-white shadow-[0_10px_20px_rgba(6,31,73,0.18)]">1</button>
-            <button type="button" className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#33496f]">Suivant</button>
+            <button type="button" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#8a9ab5] disabled:opacity-40">Précédent</button>
+            {pages.map((pageNumber) => (
+              <button key={pageNumber} type="button" onClick={() => setPage(pageNumber)} className={`grid size-11 place-items-center rounded-[8px] text-[15px] ${page === pageNumber ? 'bg-[#061f49] font-extrabold text-white shadow-[0_10px_20px_rgba(6,31,73,0.18)]' : 'border border-[#dce4ef] font-medium text-[#071f49]'}`}>
+                {pageNumber}
+              </button>
+            ))}
+            <button type="button" disabled={page >= meta.last_page} onClick={() => setPage((value) => Math.min(meta.last_page, value + 1))} className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#33496f] disabled:opacity-40">Suivant</button>
           </div>
         </div>
       </section>
+
+      <ServiceFormModal
+        open={Boolean(editingService) || form !== emptyForm}
+        editing={Boolean(editingService)}
+        form={form}
+        errors={errors}
+        saving={saving}
+        onChange={setForm}
+        onClose={closeForm}
+        onSubmit={saveService}
+      />
       <ConfirmDeleteModal
         open={Boolean(serviceToDelete)}
         title="Supprimer le service"
@@ -300,10 +331,7 @@ function ServiceRow({ service, onEdit, onDelete }) {
         <p className="leading-7 text-[#071f49]">{service.description}</p>
       </td>
       <td className="px-3 py-5">
-        <span className="inline-flex items-center gap-2 rounded-[7px] bg-[#d9f4e3] px-3 py-1.5 text-[13px] font-extrabold text-[#008e43]">
-          <span className="size-1.5 rounded-full bg-[#008e43]" />
-          {service.status}
-        </span>
+        <StatusBadge status={service.rawStatus} />
       </td>
       <td className="px-3 py-5 text-center font-medium">{service.order}</td>
       <td className="px-3 py-5 font-medium">{service.date}</td>
@@ -321,19 +349,117 @@ function ServiceRow({ service, onEdit, onDelete }) {
   )
 }
 
-export default AdminServices
+function ServiceFormModal({ open, editing, form, errors, saving, onChange, onClose, onSubmit }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#061f49]/45 px-4">
+      <form onSubmit={onSubmit} className="w-full max-w-xl rounded-[18px] border border-[#e4eaf2] bg-white p-6 shadow-[0_24px_70px_rgba(6,31,73,0.2)]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[#c88a22]">Service</p>
+            <h2 className="mt-2 text-2xl font-extrabold text-[#071f49]">{editing ? 'Modifier le service' : 'Ajouter un service'}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="grid size-10 place-items-center rounded-[8px] border border-[#dce4ef] text-[#071f49]">
+            <X size={18} />
+          </button>
+        </div>
+
+        <FormField label="Titre" error={errors.title}>
+          <input value={form.title} onChange={(event) => onChange({ ...form, title: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]" />
+        </FormField>
+        <FormField label="Description" error={errors.description} className="mt-4">
+          <textarea value={form.description} onChange={(event) => onChange({ ...form, description: event.target.value })} className="mt-2 min-h-28 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 py-3 outline-none focus:border-[#c88a22]" />
+        </FormField>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <FormField label="Icône" error={errors.icon}>
+            <select value={form.icon} onChange={(event) => onChange({ ...form, icon: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]">
+              <option value="bar-chart-3">Analyse</option>
+              <option value="settings">Technique</option>
+              <option value="pie-chart">Finance</option>
+              <option value="folder">Dossier</option>
+              <option value="handshake">Accompagnement</option>
+              <option value="clipboard-list">Conseil</option>
+            </select>
+          </FormField>
+          <FormField label="Ordre" error={errors.order}>
+            <input type="number" min="0" value={form.order} onChange={(event) => onChange({ ...form, order: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]" />
+          </FormField>
+          <label className="block pt-7">
+            <span className="inline-flex items-center gap-3 text-sm font-extrabold text-[#071f49]">
+              <input type="checkbox" checked={form.is_active} onChange={(event) => onChange({ ...form, is_active: event.target.checked })} className="size-4 accent-[#c88a22]" />
+              Actif
+            </span>
+          </label>
+        </div>
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
+          <button type="button" disabled={saving} onClick={onClose} className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-sm font-extrabold text-[#071f49] disabled:opacity-50">Annuler</button>
+          <button type="submit" disabled={saving} className="inline-flex h-11 items-center gap-3 rounded-[8px] bg-[#061f49] px-5 text-sm font-extrabold text-white disabled:opacity-60">
+            {saving ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function FormField({ label, error, className = '', children }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="text-sm font-extrabold text-[#071f49]">{label}</span>
+      {children}
+      {error ? <p className="mt-2 text-xs font-bold text-red-600">{error}</p> : null}
+    </label>
+  )
+}
+
+function StatusBadge({ status }) {
+  const active = status === 'active'
+
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-[7px] px-3 py-1.5 text-[13px] font-extrabold ${active ? 'bg-[#d9f4e3] text-[#008e43]' : 'bg-[#fff0f0] text-[#c61a1a]'}`}>
+      <span className={`size-1.5 rounded-full ${active ? 'bg-[#008e43]' : 'bg-[#c61a1a]'}`} />
+      {active ? 'Actif' : 'Inactif'}
+    </span>
+  )
+}
 
 function mapService(service) {
   const icons = { settings: Settings, 'pie-chart': PieChart, folder: Folder, handshake: Handshake, 'bar-chart-3': BarChart3, 'clipboard-list': ClipboardList }
+  const active = Boolean(service.is_active)
   return {
     id: service.id,
     icon: icons[service.icon] || ClipboardList,
     iconName: service.icon,
     title: service.title,
     description: service.description,
-    status: service.status === 'active' ? 'Actif' : 'Inactif',
-    rawStatus: service.status,
+    rawStatus: active ? 'active' : 'inactive',
     order: service.order,
-    date: new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(service.created_at)),
+    date: service.created_at ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(service.created_at)) : '-',
   }
 }
+
+function calculateStats(rows) {
+  const active = rows.filter((service) => Boolean(service.is_active)).length
+  const latest = rows.reduce((latestDate, service) => {
+    if (!service.updated_at) return latestDate
+    const value = new Date(service.updated_at)
+    return !latestDate || value > latestDate ? value : latestDate
+  }, null)
+
+  return {
+    total: rows.length,
+    active,
+    inactive: rows.length - active,
+    latest_updated_at: latest?.toISOString() || null,
+  }
+}
+
+function formatStatValue(key, value) {
+  if (key !== 'latest_updated_at') return String(value || 0)
+  if (!value) return '-'
+
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(value))
+}
+
+export default AdminServices

@@ -19,6 +19,7 @@ class Service extends Model
         'full_description',
         'image',
         'icon',
+        'is_active',
         'advantages',
         'process_steps',
         'deliverables',
@@ -36,6 +37,7 @@ class Service extends Model
     {
         return [
             'order' => 'integer',
+            'is_active' => 'boolean',
             'advantages' => 'array',
             'process_steps' => 'array',
             'deliverables' => 'array',
@@ -44,7 +46,7 @@ class Service extends Model
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('status', 'active');
+        return $query->where('is_active', true);
     }
 
     public function getImageUrlAttribute(): ?string
