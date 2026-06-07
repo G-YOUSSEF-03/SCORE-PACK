@@ -21,7 +21,7 @@ class UserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'phone' => ['nullable', 'string', 'max:50'],
-            'role' => ['required', Rule::in(['admin'])],
+            'role' => ['required', 'string', 'max:50'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'password' => $passwordRules,
         ];

@@ -12,8 +12,18 @@ class UserController extends Controller
 {
     public function index(): JsonResponse
     {
+        $latestUser = User::latest('created_at')->first();
+
         return response()->json([
-            'data' => User::latest()->paginate(15),
+            'data' => [
+                'stats' => [
+                    'total' => User::count(),
+                    'active' => User::where('status', 'active')->count(),
+                    'inactive' => User::where('status', 'inactive')->count(),
+                    'latest_created_at' => $latestUser?->created_at,
+                ],
+                'users' => User::latest()->paginate(15),
+            ],
         ]);
     }
 

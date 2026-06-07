@@ -1,144 +1,95 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   CalendarDays,
-  ChevronDown,
   ChevronRight,
   Filter,
   Pencil,
   Plus,
+  Search,
   Trash2,
   UserCheck,
   UserRoundX,
   UsersRound,
+  X,
 } from 'lucide-react'
 import { apiErrorMessage } from '../../api/client.js'
 import { usersApi } from '../../api/resources.js'
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 
-const stats = [
+const statCards = [
   {
     icon: UsersRound,
-    value: '24',
+    key: 'total',
     label: 'Total utilisateurs',
     detail: 'Tous les comptes créés',
     tone: 'navy',
   },
   {
     icon: UserCheck,
-    value: '18',
+    key: 'active',
     label: 'Utilisateurs actifs',
     detail: 'Comptes actifs',
     tone: 'gold',
   },
   {
     icon: UserRoundX,
-    value: '4',
+    key: 'inactive',
     label: 'Utilisateurs inactifs',
     detail: 'Comptes désactivés',
     tone: 'muted',
   },
   {
     icon: CalendarDays,
-    value: '12 mai 2024',
+    key: 'latest_created_at',
     label: 'Dernier utilisateur ajouté',
-    detail: 'Il y a 2 jours',
+    detail: 'Compte le plus récent',
     tone: 'gold',
   },
 ]
 
-const fallbackUsers = [
-  {
-    id: 1,
-    initials: 'YA',
-    name: 'Youssef Admin',
-    self: true,
-    role: 'Administrateur',
-    email: 'youssef.admin@scorepack.ma',
-    phone: '+212 6 12 34 56 78',
-    status: 'Actif',
-    date: '12 mai 2024',
-    time: '10:30',
-    tone: 'blue',
-  },
-  {
-    id: 2,
-    initials: 'SB',
-    name: 'Sara Benali',
-    role: 'Chef de projet',
-    email: 's.benali@scorepack.ma',
-    phone: '+212 6 98 76 54 32',
-    status: 'Actif',
-    date: '10 mai 2024',
-    time: '09:15',
-    tone: 'gold',
-  },
-  {
-    id: 3,
-    initials: 'MA',
-    name: 'Mohamed El Amrani',
-    role: 'Ingénieur',
-    email: 'm.elamrani@scorepack.ma',
-    phone: '+212 6 12 34 56 78',
-    status: 'Actif',
-    date: '8 mai 2024',
-    time: '14:20',
-    tone: 'purple',
-  },
-  {
-    id: 4,
-    initials: 'KE',
-    name: 'Khadija Zahraoui',
-    role: 'Technicien',
-    email: 'k.zahraoui@scorepack.ma',
-    phone: '+212 6 22 33 44 55',
-    status: 'Inactif',
-    date: '6 mai 2024',
-    time: '11:45',
-    tone: 'green',
-  },
-  {
-    id: 5,
-    initials: 'OE',
-    name: 'Omar El Fassih',
-    role: 'Commercial',
-    email: 'o.elfassih@scorepack.ma',
-    phone: '+212 6 44 55 66 77',
-    status: 'Actif',
-    date: '3 mai 2024',
-    time: '16:10',
-    tone: 'pink',
-  },
-  {
-    id: 6,
-    initials: 'NB',
-    name: 'Noura Belkacem',
-    role: 'Assistante',
-    email: 'n.belkacem@scorepack.ma',
-    phone: '+212 6 33 22 11 00',
-    status: 'Inactif',
-    date: '1 mai 2024',
-    time: '10:05',
-    tone: 'blue',
-  },
-]
+const emptyForm = {
+  name: '',
+  email: '',
+  phone: '',
+  password: '',
+  role: 'admin',
+  status: 'active',
+}
 
 function AdminUsers() {
-  const [users, setUsers] = useState(fallbackUsers)
+  const [users, setUsers] = useState([])
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, latest_created_at: null })
+  const [meta, setMeta] = useState({ current_page: 1, last_page: 1, from: 0, to: 0, total: 0 })
+  const [page, setPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
+  const [form, setForm] = useState(emptyForm)
+  const [errors, setErrors] = useState({})
+  const [saving, setSaving] = useState(false)
   const [userToDelete, setUserToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const { notify } = useToast()
 
-  const loadUsers = async () => {
+  const loadUsers = async (nextPage = page) => {
     setLoading(true)
     try {
-      const response = await usersApi.list()
-      setUsers((response.data || response).map(mapUser))
+      const response = await usersApi.list({ page: nextPage })
+      const usersPage = response.users || response
+      const rows = Array.isArray(usersPage.data) ? usersPage.data : usersPage
+      setUsers(rows.map(mapUser))
+      setStats(response.stats || calculateStats(rows))
+      setMeta({
+        current_page: usersPage.current_page || nextPage,
+        last_page: usersPage.last_page || 1,
+        from: usersPage.from || (rows.length ? 1 : 0),
+        to: usersPage.to || rows.length,
+        total: usersPage.total || rows.length,
+      })
     } catch (error) {
       notify(apiErrorMessage(error, 'Impossible de charger les utilisateurs.'), 'error')
     } finally {
@@ -147,24 +98,89 @@ function AdminUsers() {
   }
 
   useEffect(() => {
-    loadUsers()
-  }, [])
+    loadUsers(page)
+  }, [page])
 
-  const saveUser = async (user = null) => {
-    const name = window.prompt('Nom', user?.name || '')
-    if (!name) return
-    const email = window.prompt('Email', user?.email || '')
-    if (!email) return
-    const phone = window.prompt('Téléphone', user?.phone || '') || ''
-    const status = window.prompt('Statut: active ou inactive', user?.rawStatus || 'active') || user?.rawStatus || 'active'
-    const payload = { name, email, phone, role: 'admin', status }
-    if (!user) payload.password = window.prompt('Mot de passe', 'password123') || 'password123'
+  const roleOptions = useMemo(() => ['all', ...Array.from(new Set(users.map((user) => user.rawRole).filter(Boolean)))], [users])
+
+  const visibleUsers = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase()
+
+    return users.filter((user) => {
+      const matchesRole = roleFilter === 'all' || user.rawRole === roleFilter
+      const matchesSearch = !query || [user.name, user.email, user.phone, user.role, user.status]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query))
+
+      return matchesRole && matchesSearch
+    })
+  }, [users, searchTerm, roleFilter])
+
+  const openCreate = () => {
+    setEditingUser(null)
+    setForm(emptyForm)
+    setErrors({})
+    setFormOpen(true)
+  }
+
+  const openEdit = async (user) => {
+    setErrors({})
     try {
-      user ? await usersApi.update(user.id, payload) : await usersApi.create(payload)
-      notify(user ? 'Utilisateur mis à jour.' : 'Utilisateur ajouté.')
-      loadUsers()
+      const fresh = await usersApi.show(user.id)
+      setEditingUser(fresh)
+      setForm({
+        name: fresh.name || '',
+        email: fresh.email || '',
+        phone: fresh.phone || '',
+        password: '',
+        role: fresh.role || 'admin',
+        status: fresh.status || 'active',
+      })
+      setFormOpen(true)
     } catch (error) {
+      notify(apiErrorMessage(error, 'Impossible de charger l’utilisateur.'), 'error')
+    }
+  }
+
+  const closeForm = () => {
+    setFormOpen(false)
+    setEditingUser(null)
+    setForm(emptyForm)
+    setErrors({})
+  }
+
+  const saveUser = async (event) => {
+    event.preventDefault()
+    setSaving(true)
+    setErrors({})
+    try {
+      const payload = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        role: form.role,
+        status: form.status,
+      }
+
+      if (form.password) payload.password = form.password
+
+      if (editingUser) {
+        await usersApi.update(editingUser.id, payload)
+        notify('Utilisateur mis à jour.')
+      } else {
+        await usersApi.create({ ...payload, password: form.password })
+        notify('Utilisateur ajouté.')
+      }
+
+      closeForm()
+      loadUsers(page)
+    } catch (error) {
+      if (error.response?.data?.errors) {
+        setErrors(Object.fromEntries(Object.entries(error.response.data.errors).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value])))
+      }
       notify(apiErrorMessage(error, 'Opération impossible.'), 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -175,13 +191,15 @@ function AdminUsers() {
       await usersApi.remove(userToDelete.id)
       setUserToDelete(null)
       notify('Utilisateur supprimé.')
-      loadUsers()
+      loadUsers(page)
     } catch (error) {
       notify(apiErrorMessage(error, 'Suppression impossible.'), 'error')
     } finally {
       setDeleting(false)
     }
   }
+
+  const pages = Array.from({ length: Math.max(1, meta.last_page) }, (_, index) => index + 1)
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
@@ -195,15 +213,15 @@ function AdminUsers() {
           </nav>
         </div>
 
-        <button type="button" onClick={() => saveUser()} className="inline-flex h-[54px] w-fit items-center gap-3 rounded-[8px] bg-[#061f49] px-7 text-[15px] font-extrabold text-white shadow-[0_14px_28px_rgba(6,31,73,0.18)] transition hover:bg-[#0b2d63]">
+        <button type="button" onClick={openCreate} className="inline-flex h-[54px] w-fit items-center gap-3 rounded-[8px] bg-[#061f49] px-7 text-[15px] font-extrabold text-white shadow-[0_14px_28px_rgba(6,31,73,0.18)] transition hover:bg-[#0b2d63]">
           <Plus size={22} />
           Ajouter un utilisateur
         </button>
       </section>
 
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
+        {statCards.map((stat) => (
+          <StatCard key={stat.label} {...stat} value={formatStatValue(stat.key, stats[stat.key])} />
         ))}
       </section>
 
@@ -211,18 +229,27 @@ function AdminUsers() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="text-[22px] font-extrabold tracking-[-0.025em] text-[#071f49]">Liste des utilisateurs</h2>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <button type="button" className="inline-flex h-[44px] items-center justify-between gap-7 rounded-[8px] border border-[#dce4ef] bg-white px-4 text-[14px] font-extrabold text-[#071f49]">
+            <label className="inline-flex h-[44px] items-center justify-between gap-7 rounded-[8px] border border-[#dce4ef] bg-white px-4 text-[14px] font-extrabold text-[#071f49]">
               <span className="inline-flex items-center gap-3">
                 <Filter size={17} />
-                Tous les rôles
+                Rôle
               </span>
-              <ChevronDown size={17} />
-            </button>
-            <button type="button" className="inline-flex h-[44px] items-center justify-between gap-4 rounded-[8px] border border-[#dce4ef] bg-white px-4 text-[14px] font-extrabold text-[#071f49]">
-              <span className="text-[#33496f]">Trier par :</span>
-              Plus récents
-              <ChevronDown size={17} />
-            </button>
+              <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="bg-transparent text-[14px] font-extrabold outline-none">
+                {roleOptions.map((role) => (
+                  <option key={role} value={role}>{role === 'all' ? 'Tous les rôles' : roleLabel(role)}</option>
+                ))}
+              </select>
+            </label>
+            <label className="inline-flex h-[44px] items-center gap-3 rounded-[8px] border border-[#dce4ef] bg-white px-4 text-[14px] font-extrabold text-[#071f49]">
+              <Search size={17} />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Rechercher..."
+                className="h-full min-w-[190px] bg-transparent text-[14px] font-semibold outline-none placeholder:text-[#8a9ab5]"
+              />
+            </label>
           </div>
         </div>
         {loading ? <p className="mt-4 text-sm font-bold text-[#52668c]">Chargement des utilisateurs...</p> : null}
@@ -242,25 +269,41 @@ function AdminUsers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e8edf4]">
-              {users.map((user) => (
-                <UserRow key={user.id} user={user} onEdit={saveUser} onDelete={setUserToDelete} />
+              {visibleUsers.map((user) => (
+                <UserRow key={user.id} user={user} onEdit={openEdit} onDelete={setUserToDelete} />
               ))}
+              {!loading && !visibleUsers.length ? (
+                <tr>
+                  <td colSpan={8} className="px-3 py-10 text-center text-sm font-bold text-[#52668c]">Aucun utilisateur trouvé</td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
 
         <div className="flex flex-col gap-4 border-t border-[#e8edf4] pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[14px] font-medium text-[#33496f]">Affichage de 1 à 6 sur 24 utilisateurs</p>
+          <p className="text-[14px] font-medium text-[#33496f]">Affichage de {meta.from || 0} à {meta.to || visibleUsers.length} sur {meta.total || visibleUsers.length} utilisateurs</p>
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#8a9ab5]">Précédent</button>
-            <button type="button" className="grid size-11 place-items-center rounded-[8px] bg-[#061f49] text-[15px] font-extrabold text-white shadow-[0_10px_20px_rgba(6,31,73,0.18)]">1</button>
-            <button type="button" className="grid size-11 place-items-center rounded-[8px] border border-[#dce4ef] text-[15px] font-medium text-[#071f49]">2</button>
-            <button type="button" className="grid size-11 place-items-center rounded-[8px] border border-[#dce4ef] text-[15px] font-medium text-[#071f49]">3</button>
-            <button type="button" className="grid size-11 place-items-center rounded-[8px] border border-[#dce4ef] text-[15px] font-medium text-[#071f49]">4</button>
-            <button type="button" className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#33496f]">Suivant</button>
+            <button type="button" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#8a9ab5] disabled:opacity-40">Précédent</button>
+            {pages.map((pageNumber) => (
+              <button key={pageNumber} type="button" onClick={() => setPage(pageNumber)} className={`grid size-11 place-items-center rounded-[8px] text-[15px] ${page === pageNumber ? 'bg-[#061f49] font-extrabold text-white shadow-[0_10px_20px_rgba(6,31,73,0.18)]' : 'border border-[#dce4ef] font-medium text-[#071f49]'}`}>
+                {pageNumber}
+              </button>
+            ))}
+            <button type="button" disabled={page >= meta.last_page} onClick={() => setPage((value) => Math.min(meta.last_page, value + 1))} className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-[14px] font-medium text-[#33496f] disabled:opacity-40">Suivant</button>
           </div>
         </div>
       </section>
+      <UserFormModal
+        open={formOpen}
+        editing={Boolean(editingUser)}
+        form={form}
+        errors={errors}
+        saving={saving}
+        onChange={setForm}
+        onClose={closeForm}
+        onSubmit={saveUser}
+      />
       <ConfirmDeleteModal
         open={Boolean(userToDelete)}
         title="Supprimer l'utilisateur"
@@ -307,7 +350,6 @@ function UserRow({ user, onEdit, onDelete }) {
           <Avatar initials={user.initials} tone={user.tone} />
           <span className="flex min-w-0 items-center gap-3">
             <span className="truncate font-extrabold">{user.name}</span>
-            {user.self ? <span className="rounded-[7px] bg-[#dcecff] px-2 py-1 text-[12px] font-extrabold text-[#006dff]">Vous</span> : null}
           </span>
         </div>
       </td>
@@ -337,6 +379,74 @@ function UserRow({ user, onEdit, onDelete }) {
   )
 }
 
+function UserFormModal({ open, editing, form, errors, saving, onChange, onClose, onSubmit }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#061f49]/45 px-4">
+      <form onSubmit={onSubmit} className="w-full max-w-xl rounded-[18px] border border-[#e4eaf2] bg-white p-6 shadow-[0_24px_70px_rgba(6,31,73,0.2)]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[#c88a22]">Utilisateur</p>
+            <h2 className="mt-2 text-2xl font-extrabold text-[#071f49]">{editing ? 'Modifier l’utilisateur' : 'Ajouter un utilisateur'}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="grid size-10 place-items-center rounded-[8px] border border-[#dce4ef] text-[#071f49]">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <FormField label="Nom" error={errors.name}>
+            <input value={form.name} onChange={(event) => onChange({ ...form, name: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]" />
+          </FormField>
+          <FormField label="Email" error={errors.email}>
+            <input type="email" value={form.email} onChange={(event) => onChange({ ...form, email: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]" />
+          </FormField>
+          <FormField label="Téléphone" error={errors.phone}>
+            <input value={form.phone} onChange={(event) => onChange({ ...form, phone: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]" />
+          </FormField>
+          <FormField label={editing ? 'Mot de passe (optionnel)' : 'Mot de passe'} error={errors.password}>
+            <input type="password" value={form.password} onChange={(event) => onChange({ ...form, password: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]" />
+          </FormField>
+          <FormField label="Rôle" error={errors.role}>
+            <select value={form.role} onChange={(event) => onChange({ ...form, role: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]">
+              <option value="admin">Administrateur</option>
+              <option value="manager">Chef de projet</option>
+              <option value="engineer">Ingénieur</option>
+              <option value="technician">Technicien</option>
+              <option value="commercial">Commercial</option>
+              <option value="assistant">Assistante</option>
+            </select>
+          </FormField>
+          <FormField label="Statut" error={errors.status}>
+            <select value={form.status} onChange={(event) => onChange({ ...form, status: event.target.value })} className="mt-2 h-12 w-full rounded-[10px] border border-[#dce4ef] bg-[#f7f9fc] px-4 outline-none focus:border-[#c88a22]">
+              <option value="active">Actif</option>
+              <option value="inactive">Inactif</option>
+            </select>
+          </FormField>
+        </div>
+
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
+          <button type="button" disabled={saving} onClick={onClose} className="h-11 rounded-[8px] border border-[#dce4ef] px-5 text-sm font-extrabold text-[#071f49] disabled:opacity-50">Annuler</button>
+          <button type="submit" disabled={saving} className="inline-flex h-11 items-center gap-3 rounded-[8px] bg-[#061f49] px-5 text-sm font-extrabold text-white disabled:opacity-60">
+            {saving ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function FormField({ label, error, children }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-extrabold text-[#071f49]">{label}</span>
+      {children}
+      {error ? <p className="mt-2 text-xs font-bold text-red-600">{error}</p> : null}
+    </label>
+  )
+}
+
 function Avatar({ initials, tone }) {
   const tones = {
     blue: 'bg-[#dceaff] text-[#006dff]',
@@ -359,7 +469,7 @@ function RoleBadge({ role }) {
     Assistante: 'bg-[#ffe1e8] text-[#d51d42]',
   }
 
-  return <span className={`inline-flex rounded-[7px] px-3 py-1.5 text-[13px] font-extrabold ${tones[role]}`}>{role}</span>
+  return <span className={`inline-flex rounded-[7px] px-3 py-1.5 text-[13px] font-extrabold ${tones[role] || tones.Administrateur}`}>{role}</span>
 }
 
 function StatusBadge({ status }) {
@@ -373,23 +483,64 @@ function StatusBadge({ status }) {
   )
 }
 
-export default AdminUsers
-
 function mapUser(user) {
-  const createdAt = new Date(user.created_at)
-  const initials = user.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()
+  const createdAt = user.created_at ? new Date(user.created_at) : new Date()
   return {
     id: user.id,
-    initials,
+    initials: initialsFor(user.name),
     name: user.name,
-    self: user.email === 'youssef.admin@scorepack.ma',
-    role: user.role === 'admin' ? 'Administrateur' : user.role,
+    role: roleLabel(user.role),
+    rawRole: user.role,
     email: user.email,
     phone: user.phone || '',
     status: user.status === 'active' ? 'Actif' : 'Inactif',
     rawStatus: user.status,
     date: new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(createdAt),
     time: new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(createdAt),
-    tone: 'blue',
+    tone: toneFor(user.id),
   }
 }
+
+function calculateStats(rows) {
+  const active = rows.filter((user) => user.status === 'active').length
+  const latest = rows.reduce((latestDate, user) => {
+    if (!user.created_at) return latestDate
+    const value = new Date(user.created_at)
+    return !latestDate || value > latestDate ? value : latestDate
+  }, null)
+
+  return {
+    total: rows.length,
+    active,
+    inactive: rows.length - active,
+    latest_created_at: latest?.toISOString() || null,
+  }
+}
+
+function formatStatValue(key, value) {
+  if (key !== 'latest_created_at') return String(value || 0)
+  if (!value) return '-'
+
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(value))
+}
+
+function initialsFor(name = '') {
+  return name.split(' ').filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'U'
+}
+
+function roleLabel(role) {
+  return {
+    admin: 'Administrateur',
+    manager: 'Chef de projet',
+    engineer: 'Ingénieur',
+    technician: 'Technicien',
+    commercial: 'Commercial',
+    assistant: 'Assistante',
+  }[role] || role
+}
+
+function toneFor(id) {
+  return ['blue', 'gold', 'purple', 'green', 'pink'][Number(id || 0) % 5]
+}
+
+export default AdminUsers

@@ -63,7 +63,8 @@ export const messagesApi = {
 }
 
 export const usersApi = {
-  list: () => api.get('/admin/users').then(unwrap),
+  list: (params = {}) => api.get('/admin/users', { params }).then(unwrap),
+  show: (id) => api.get(`/admin/users/${id}`).then(unwrap),
   create: (payload) => api.post('/admin/users', payload).then(unwrap),
   update: (id, payload) => api.put(`/admin/users/${id}`, payload).then(unwrap),
   remove: (id) => api.delete(`/admin/users/${id}`),
