@@ -24,8 +24,9 @@ import {
   Users,
 } from 'lucide-react'
 import heroInfographic from './assets/score-pack-hero-infographic.png'
-import aboutHero from './assets/corporate/about-hero-building.png'
-import aboutMeeting from './assets/corporate/about-meeting.png'
+import aboutAnalysisBoard from './assets/about/about-analysis-board.png'
+import aboutOfficeDocuments from './assets/about/about-office-documents.png'
+import servicesHero from './assets/services/services-hero.png'
 import ContactVisitorPage from './pages/visitor/ContactPage.jsx'
 import ServiceDetails from './pages/visitor/ServiceDetails.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
@@ -60,10 +61,12 @@ const stats = [
   { icon: Handshake, number: '50+', title: 'Partenaires & Investisseurs', text: 'Nous collaborons avec un large réseau de partenaires' },
 ]
 
+const publicDisplayEmail = 'contact@casacar.ma'
+
 const defaultSettings = {
   company_name: 'SCORE PACK',
   tagline: 'Bureau d’études des projets d’investissement',
-  email: 'youssefelgourari1@gmail.com',
+  email: publicDisplayEmail,
   phone: '+212 6 12 34 56 78',
   secondary_phone: '+212 5 22 98 76 54',
   address: '123 Boulevard Mohammed V, Résidence Al Qods, 5ème étage',
@@ -420,7 +423,7 @@ function AboutPage() {
         </div>
 
         <img
-          src={aboutHero}
+          src={aboutAnalysisBoard}
           alt="Bâtiment corporate moderne SCORE PACK"
           className="h-[315px] w-full rounded-[24px] object-cover shadow-[0_22px_55px_rgba(15,39,71,0.12)] sm:h-[365px] lg:h-[320px]"
         />
@@ -472,7 +475,7 @@ function AboutPage() {
 
         <Reveal as="div" delay={0.2}>
           <img
-            src={aboutMeeting}
+            src={aboutOfficeDocuments}
             alt="Consultants SCORE PACK autour de plans et rapports financiers"
             className="h-full min-h-[275px] w-full rounded-[14px] object-cover shadow-[0_16px_44px_rgba(15,39,71,0.11)]"
           />
@@ -515,7 +518,7 @@ function ServicesPage({ publicData }) {
         </div>
 
         <img
-          src={aboutMeeting}
+          src={servicesHero}
           alt="Ingénieurs et consultants analysant des plans"
           className="h-[300px] w-full rounded-[18px] object-cover object-center shadow-[0_22px_55px_rgba(15,39,71,0.12)] sm:h-[350px] lg:h-[305px]"
         />
@@ -765,9 +768,9 @@ function QuoteRequestPage() {
               <Phone className="text-[#C79A4A]" size={20} />
               +212 6 12 34 56 78
             </a>
-            <a href="mailto:youssefelgourari1@gmail.com" className="flex items-center gap-4">
+            <a href={`mailto:${publicDisplayEmail}`} className="flex items-center gap-4">
               <Mail className="text-[#C79A4A]" size={20} />
-              youssefelgourari1@gmail.com
+              {publicDisplayEmail}
             </a>
           </div>
         </div>
@@ -832,9 +835,9 @@ function ContactPage() {
               <Phone className="text-[#C79A4A]" size={20} />
               +212 6 12 34 56 78
             </a>
-            <a href="mailto:youssefelgourari1@gmail.com" className="flex items-center gap-4">
+            <a href={`mailto:${publicDisplayEmail}`} className="flex items-center gap-4">
               <Mail className="text-[#C79A4A]" size={20} />
-              youssefelgourari1@gmail.com
+              {publicDisplayEmail}
             </a>
           </div>
         </div>
@@ -1182,6 +1185,7 @@ function Input({ label, className = '', error, ...props }) {
 function Footer({ settings = defaultSettings, linkPrefix = '' }) {
   const address = [settings.address, settings.city, settings.country].filter(Boolean).join(', ') || 'Casablanca, Maroc'
   const withPrefix = (href) => (href.startsWith('#') ? `${linkPrefix}${href}` : href)
+  const displayEmail = publicDisplayEmail
 
   return (
     <footer className="mt-0 bg-white">
@@ -1204,9 +1208,9 @@ function Footer({ settings = defaultSettings, linkPrefix = '' }) {
                 <Phone size={17} />
                 {settings.phone || defaultSettings.phone}
               </a>
-              <a href={`mailto:${settings.email || defaultSettings.email}`} className="flex items-center gap-3">
+              <a href={`mailto:${displayEmail}`} className="flex items-center gap-3">
                 <Mail size={17} />
-                {settings.email || defaultSettings.email}
+                {displayEmail}
               </a>
               <span className="flex items-center gap-3">
                 <MapPin size={17} />

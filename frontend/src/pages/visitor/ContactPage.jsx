@@ -5,11 +5,12 @@ import { apiErrorMessage } from '../../api/client.js'
 import { publicApi } from '../../api/resources.js'
 
 const companyAddress = 'RUE SARIA BEN ZOUNAIM ETG 3 APPT 3, PALMIER, CASABLANCA, MOROCCO'
+const publicDisplayEmail = 'contact@casacar.ma'
 
 const fallbackSettings = {
   company_name: 'SCORE PACK',
   tagline: 'Bureau d’études des projets d’investissement',
-  email: 'youssefelgourari1@gmail.com',
+  email: publicDisplayEmail,
   phone: '+212 6 12 34 56 78',
   secondary_phone: '+212 5 22 98 76 54',
   address: '123 Boulevard Mohammed V, Résidence Al Qods, 5ème étage',
@@ -32,7 +33,7 @@ const contactCards = [
   {
     icon: Mail,
     title: 'Email',
-    lines: ['youssefelgourari1@gmail.com'],
+    lines: [publicDisplayEmail],
   },
   {
     icon: Clock3,
@@ -235,7 +236,7 @@ function buildContactCards(settings) {
     {
       icon: contactCards[2].icon,
       title: contactCards[2].title,
-      lines: [settings.email || fallbackSettings.email],
+      lines: [publicDisplayEmail],
     },
     {
       icon: contactCards[3].icon,
