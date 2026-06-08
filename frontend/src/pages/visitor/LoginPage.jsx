@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Eye, LogIn, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import heroBuilding from '../../assets/corporate/hero-building.png'
-import { apiErrorMessage } from '../../api/client.js'
-import { useAuth } from '../../context/AuthContext.jsx'
-import { useToast } from '../../context/ToastContext.jsx'
-import Logo from '../../components/Logo.jsx'
+import { useState } from "react";
+import { Eye, LogIn, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import heroBuilding from "../../assets/corporate/login.png";
+import { apiErrorMessage } from "../../api/client.js";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { useToast } from "../../context/ToastContext.jsx";
+import Logo from "../../components/Logo.jsx";
 
 function LoginPage() {
   return (
@@ -17,11 +17,12 @@ function LoginPage() {
         </section>
 
         <p className="py-7 text-center text-[16px] font-medium text-[#415680]">
-          © 2024 <span className="font-bold text-[#045ddd]">SCORE PACK.</span> Tous droits réservés.
+          © 2026 <span className="font-bold text-[#045ddd]">SCORE PACK.</span>{" "}
+          Tous droits réservés.
         </p>
       </div>
     </main>
-  )
+  );
 }
 
 function BrandPanel() {
@@ -44,55 +45,85 @@ function BrandPanel() {
         </h1>
 
         <p className="mt-7 max-w-[450px] text-[20px] font-medium leading-[1.55] text-white/95 lg:text-[18px] xl:text-[20px]">
-          Connectez-vous pour accéder à votre tableau de bord et gérer votre activité.
+          Connectez-vous pour accéder à votre tableau de bord et gérer votre
+          activité.
         </p>
       </div>
 
       <div className="absolute inset-x-0 bottom-0 h-[46%] overflow-hidden">
-        <img src={heroBuilding} alt="Immeuble de bureaux moderne" className="h-full w-full object-cover object-center brightness-[0.56] contrast-[1.05] saturate-[0.92]" />
+        <img
+          src={heroBuilding}
+          alt="Immeuble de bureaux moderne"
+          className="h-full w-full object-cover object-center brightness-[0.56] contrast-[1.05] saturate-[0.92]"
+        />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#062b61_0%,rgba(6,43,97,0.28)_35%,rgba(0,11,31,0.34)_100%)]" />
       </div>
     </aside>
-  )
+  );
 }
 
 function LoginForm() {
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const { notify } = useToast()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const { notify } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const onChange = (event) => {
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
-  }
+    setForm((current) => ({
+      ...current,
+      [event.target.name]: event.target.value,
+    }));
+  };
 
   const onSubmit = async (event) => {
-    event.preventDefault()
-    setLoading(true)
+    event.preventDefault();
+    setLoading(true);
     try {
-      await login(form)
-      notify('Connexion réussie.')
-      navigate(location.state?.from?.pathname || '/admin', { replace: true })
+      await login(form);
+      notify("Connexion réussie.");
+      navigate(location.state?.from?.pathname || "/admin", { replace: true });
     } catch (error) {
-      notify(apiErrorMessage(error, 'Connexion impossible.'), 'error')
+      notify(apiErrorMessage(error, "Connexion impossible."), "error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <section className="order-1 flex items-center justify-center bg-white px-7 py-12 sm:px-10 lg:order-2 lg:px-12">
       <div className="w-full max-w-[575px]">
         <div>
-          <h2 className="text-[42px] font-extrabold leading-none tracking-[-0.045em] text-[#061f49]">Connexion</h2>
-          <p className="mt-5 text-[18px] font-medium text-[#425784]">Veuillez vous connecter à votre compte admin</p>
+          <h2 className="text-[42px] font-extrabold leading-none tracking-[-0.045em] text-[#061f49]">
+            Connexion
+          </h2>
+          <p className="mt-5 text-[18px] font-medium text-[#425784]">
+            Veuillez vous connecter à votre compte admin
+          </p>
         </div>
 
         <form className="mt-[74px]" onSubmit={onSubmit}>
-          <Field icon={Mail} label="Adresse email" placeholder="Entrez votre adresse email" type="email" name="email" value={form.email} onChange={onChange} />
-          <Field icon={LockKeyhole} label="Mot de passe" placeholder="Entrez votre mot de passe" type="password" name="password" value={form.password} onChange={onChange} trailingIcon={Eye} className="mt-[49px]" />
+          <Field
+            icon={Mail}
+            label="Adresse email"
+            placeholder="Entrez votre adresse email"
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={onChange}
+          />
+          <Field
+            icon={LockKeyhole}
+            label="Mot de passe"
+            placeholder="Entrez votre mot de passe"
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={onChange}
+            trailingIcon={Eye}
+            className="mt-[49px]"
+          />
 
           <div className="mt-10 flex flex-wrap items-center justify-between gap-4 text-[16px] font-medium">
             <label className="inline-flex items-center gap-3 text-[#061f49]">
@@ -103,7 +134,10 @@ function LoginForm() {
               />
               Se souvenir de moi
             </label>
-            <a href="#forgot-password" className="font-semibold text-[#0057ff] transition hover:text-[#d59a22]">
+            <a
+              href="#forgot-password"
+              className="font-semibold text-[#0057ff] transition hover:text-[#d59a22]"
+            >
               Mot de passe oublié ?
             </a>
           </div>
@@ -114,15 +148,9 @@ function LoginForm() {
             className="mt-[52px] flex h-[63px] w-full items-center justify-center gap-5 rounded-[8px] bg-[#061f49] text-[18px] font-extrabold text-white shadow-[0_14px_28px_rgba(6,31,73,0.18)] transition hover:bg-[#092b62]"
           >
             <LogIn size={23} />
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
-
-        <div className="mt-[54px] flex items-center gap-6">
-          <span className="h-px flex-1 bg-[#d9e1ef]" />
-          <span className="text-[15px] font-extrabold text-[#425784]">ou</span>
-          <span className="h-px flex-1 bg-[#d9e1ef]" />
-        </div>
 
         <p className="mt-[52px] flex items-center justify-center gap-4 text-center text-[16px] font-medium text-[#536994]">
           <ShieldCheck size={24} className="shrink-0 text-[#8fa1c2]" />
@@ -130,10 +158,20 @@ function LoginForm() {
         </p>
       </div>
     </section>
-  )
+  );
 }
 
-function Field({ icon: Icon, label, placeholder, type, name, value, onChange, trailingIcon: TrailingIcon, className = '' }) {
+function Field({
+  icon: Icon,
+  label,
+  placeholder,
+  type,
+  name,
+  value,
+  onChange,
+  trailingIcon: TrailingIcon,
+  className = "",
+}) {
   return (
     <label className={`block ${className}`}>
       <span className="text-[16px] font-extrabold text-[#061f49]">{label}</span>
@@ -151,17 +189,19 @@ function Field({ icon: Icon, label, placeholder, type, name, value, onChange, tr
         {TrailingIcon ? <TrailingIcon size={21} className="shrink-0" /> : null}
       </span>
     </label>
-  )
+  );
 }
 
 function Watermark({ className }) {
   return (
-    <span className={`pointer-events-none absolute h-[170px] w-[148px] ${className}`}>
+    <span
+      className={`pointer-events-none absolute h-[170px] w-[148px] ${className}`}
+    >
       <span className="absolute inset-0 border border-white/30 [clip-path:polygon(50%_0,100%_25%,100%_75%,50%_100%,0_75%,0_25%)]" />
       <span className="absolute inset-[38px] border border-white/25 [clip-path:polygon(50%_0,100%_25%,100%_75%,50%_100%,0_75%,0_25%)]" />
       <span className="absolute inset-[62px] border border-white/20 [clip-path:polygon(50%_0,100%_25%,100%_75%,50%_100%,0_75%,0_25%)]" />
     </span>
-  )
+  );
 }
 
-export default LoginPage
+export default LoginPage;

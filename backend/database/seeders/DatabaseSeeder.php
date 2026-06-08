@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'youssefelgourari1@gmail.com',
                 'phone' => '+212 6 12 34 56 78',
                 'secondary_phone' => '+212 5 22 98 76 54',
-                'address' => '123 Boulevard Mohammed V, Résidence Al Qods, 5ème étage',
+                'address' => 'RUE SARIA BEN ZOUNAIM ETG 3 APPT 3, PALMIER, CASABLANCA, MOROCCO',
                 'city' => 'Casablanca',
                 'country' => 'Maroc',
                 'working_hours' => 'Lundi - Vendredi : 08h30 - 18h30 / Samedi : 09h00 - 13h00',
@@ -53,16 +53,16 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Montage de dossiers', 'description' => 'Constitution de dossiers solides et complets pour banques, investisseurs et organismes de financement.', 'icon' => 'folder', 'status' => 'active', 'order' => 4],
             ['title' => 'Accompagnement', 'description' => "Nous vous accompagnons à chaque étape de votre projet jusqu'à sa concrétisation.", 'icon' => 'handshake', 'status' => 'active', 'order' => 5],
             ['title' => 'Conseil stratégique', 'description' => 'Conseils personnalisés pour optimiser vos décisions et maximiser la performance de vos investissements.', 'icon' => 'clipboard-list', 'status' => 'active', 'order' => 6],
-        ])->each(fn (array $service) => Service::updateOrCreate(['title' => $service['title']], $service));
+        ])->each(fn(array $service) => Service::updateOrCreate(['title' => $service['title']], $service));
 
-        collect($this->serviceDetails())->each(fn (array $service) => Service::updateOrCreate(['order' => $service['order']], $service));
+        collect($this->serviceDetails())->each(fn(array $service) => Service::updateOrCreate(['order' => $service['order']], $service));
 
         collect([
             ['title' => 'Complexe résidentiel à Casablanca', 'category' => 'Immobilier', 'location' => 'Casablanca', 'short_description' => 'Étude de faisabilité et montage financier pour un complexe résidentiel.', 'detailed_description' => 'Étude de faisabilité et montage financier pour un complexe résidentiel.', 'client' => 'Client SCORE PACK', 'project_date' => now()->subMonths(2)->toDateString(), 'estimated_budget' => '15 000 000 MAD', 'duration' => '24 mois', 'slug' => 'complexe-residentiel-casablanca', 'meta_title' => 'Complexe résidentiel à Casablanca | SCORE PACK', 'meta_description' => 'Découvrez notre projet de complexe résidentiel à Casablanca.', 'status' => 'published', 'is_published' => true],
             ['title' => 'Unité de production industrielle', 'category' => 'Industrie', 'location' => 'Tanger', 'short_description' => 'Étude technique et financière pour une unité de production.', 'detailed_description' => 'Étude technique et financière pour une unité de production.', 'client' => 'Client SCORE PACK', 'project_date' => now()->subMonths(3)->toDateString(), 'estimated_budget' => '22 000 000 MAD', 'duration' => '18 mois', 'slug' => 'unite-production-industrielle', 'meta_title' => 'Unité de production industrielle | SCORE PACK', 'meta_description' => 'Découvrez notre projet industriel à Tanger.', 'status' => 'published', 'is_published' => true],
             ['title' => 'Centrale solaire à Ouarzazate', 'category' => 'Énergie', 'location' => 'Ouarzazate', 'short_description' => 'Analyse de rentabilité et structuration du financement.', 'detailed_description' => 'Analyse de rentabilité et structuration du financement.', 'client' => 'Client SCORE PACK', 'project_date' => now()->subMonths(4)->toDateString(), 'estimated_budget' => '30 000 000 MAD', 'duration' => '30 mois', 'slug' => 'centrale-solaire-ouarzazate', 'meta_title' => 'Centrale solaire à Ouarzazate | SCORE PACK', 'meta_description' => 'Découvrez notre projet solaire à Ouarzazate.', 'status' => 'published', 'is_published' => true],
             ['title' => 'Aménagement routier à Marrakech', 'category' => 'Infrastructure', 'location' => 'Marrakech', 'short_description' => 'Étude budgétaire et montage du dossier technique.', 'detailed_description' => 'Étude budgétaire et montage du dossier technique.', 'client' => 'Client SCORE PACK', 'project_date' => now()->subMonths(5)->toDateString(), 'estimated_budget' => '10 000 000 MAD', 'duration' => '12 mois', 'slug' => 'amenagement-routier-marrakech', 'meta_title' => 'Aménagement routier à Marrakech | SCORE PACK', 'meta_description' => 'Découvrez notre projet infrastructure à Marrakech.', 'status' => 'draft', 'is_published' => false],
-        ])->each(fn (array $project) => Project::updateOrCreate(['title' => $project['title']], $project));
+        ])->each(fn(array $project) => Project::updateOrCreate(['title' => $project['title']], $project));
 
         collect([
             [
@@ -101,7 +101,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'published',
                 'published_at' => now()->subDays(3),
             ],
-        ])->each(fn (array $article) => News::updateOrCreate(['slug' => $article['slug']], $article));
+        ])->each(fn(array $article) => News::updateOrCreate(['slug' => $article['slug']], $article));
     }
 
     private function serviceDetails(): array
